@@ -330,12 +330,12 @@ $(document).ready(function () {
 <h1>Data preparation</h1>
 <p>Read in the data</p>
 <pre class="r"><code># all alternatives
-x&lt;-read.csv(&quot;input/17090800001_conjoint_choice_dat_x.csv&quot;)
-x$Price&lt;-as.factor(as.character(x$Price))
+x&lt;-read.csv(&quot;input/19019700001_conjoint_choice_dat_X.csv&quot;)
+#x$Price&lt;-as.factor(as.character(x$Price))
 # choice per display group
-y&lt;-read.csv(&quot;input/17090800001_conjoint_choice_dat_y.csv&quot;)
+y&lt;-read.csv(&quot;input/19019700001_conjoint_choice_dat_y.csv&quot;)
 # demographic information
-z&lt;-read.csv(&quot;input/17090800001_conjoint_choice_dat_z.csv&quot;)</code></pre>
+z&lt;-read.csv(&quot;input/19019700001_conjoint_choice_dat_Z.csv&quot;)</code></pre>
 <p>Transform the data into long format</p>
 <pre class="r"><code>choicesperquestions&lt;-3
 
@@ -350,7 +350,7 @@ x$response&lt;-0
 for (i in 1:nrow(y))
 {
   j=y[i,2]
-  x[j,6]&lt;-1
+  x[j,8]&lt;-1
 }
 
 x$Profile&lt;-NULL
@@ -368,41 +368,50 @@ for (i in 1:nrow(x))
   }
   if(alternative&lt;=choicesperquestions)
   {
-    x[i,6]&lt;-questioncounter
-    x[i,7]&lt;-alternative
+    x[i,8]&lt;-questioncounter
+    x[i,9]&lt;-alternative
     alternative&lt;-alternative+1
   }
   else
   {
     questioncounter&lt;-questioncounter+1
     alternative&lt;-1
-    x[i,6]&lt;-questioncounter
-    x[i,7]&lt;-alternative
+    x[i,8]&lt;-questioncounter
+    x[i,9]&lt;-alternative
     alternative&lt;-alternative+1
   }
 }
-x &lt;- x[c(1,6,7,2,3,4,5)]
-# inspect the data for errors
 
 # merge a valid covariate here: in my case sex or Q1.
 x&lt;-merge(x,z,by=&quot;ID&quot;,all.x=TRUE)
-colnames(x)[8] &lt;- &quot;sex&quot;
+colnames(x)[10] &lt;- &quot;sex&quot;
+colnames(x)[11] &lt;- &quot;perception&quot;
 x$Q2.&lt;-NULL
 summary(x)</code></pre>
-<pre><code>##        ID          ques          alt        Brand    Price        Size   
-##  ID_5886:18   Min.   :1.0   Min.   :1   apple  :35   150:11   medium:30  
-##  ID_5887:18   1st Qu.:2.0   1st Qu.:1   lg     :29   200:17   Mocha :35  
-##  ID_5888:18   Median :3.5   Median :2   samsung:26   250:18   small :25  
-##  ID_5889:18   Mean   :3.5   Mean   :2                300: 8              
-##  ID_5890:18   3rd Qu.:5.0   3rd Qu.:3                350:16              
-##               Max.   :6.0   Max.   :3                400:20              
-##     response          sex    
-##  Min.   :0.0000   Female:18  
-##  1st Qu.:0.0000   Male  :72  
-##  Median :0.0000              
-##  Mean   :0.3333              
-##  3rd Qu.:1.0000              
-##  Max.   :1.0000</code></pre>
+<pre><code>##         ID           Brand         Price             Type         Gear    
+##  ID_10782: 18   Audi    :298   Min.   :15000   berline :298   auto  :452  
+##  ID_10785: 18   BMW     :285   1st Qu.:15000   city car:312   manual:448  
+##  ID_10834: 18   Mercedes:317   Median :20000   SUV     :290               
+##  ID_10835: 18                  Mean   :20994                              
+##  ID_10836: 18                  3rd Qu.:25000                              
+##  ID_10841: 18                  Max.   :30000                              
+##  (Other) :792                                                             
+##  Options       response           ques          alt        sex     
+##  all :317   Min.   :0.0000   Min.   :1.0   Min.   :1   Female:486  
+##  none:269   1st Qu.:0.0000   1st Qu.:2.0   1st Qu.:1   Male  :414  
+##  some:314   Median :0.0000   Median :3.5   Median :2               
+##             Mean   :0.3333   Mean   :3.5   Mean   :2               
+##             3rd Qu.:1.0000   3rd Qu.:5.0   3rd Qu.:3               
+##             Max.   :1.0000   Max.   :6.0   Max.   :3               
+##                                                                    
+##            perception           Q3.     
+##  18_24_years_old:702   Indifferent:108  
+##  25_34_years_old:162   Negative   : 54  
+##  45_54_years_old: 18   Positive   :738  
+##  55_64_years_old: 18                    
+##                                         
+##                                         
+## </code></pre>
 <p>Our data x is now in the long format so you can launch the first two solution methods</p>
 </div>
 <div id="analysis" class="section level1">
@@ -414,32 +423,32 @@ choice[x[,&quot;response&quot;]==1] &lt;- x[x[,&quot;response&quot;]==1,&quot;al
 <pre class="r"><code>head(choice)</code></pre>
 <pre><code>## [1] 1 0 0 0 2 0</code></pre>
 <p>Convert the factor levels to dummies: change the name of factor to your factor names</p>
-<pre class="r"><code>x.coded &lt;- model.matrix(~ Brand + Price + Size, data = x) # change this to your own factors
+<pre class="r"><code>x.coded &lt;- model.matrix(~ Brand + Price + Type + Gear + Options, data = x) # change this to your own factors
 x.coded &lt;- x.coded[, -1] # remove the intercept</code></pre>
 <p>Combine everything back into a df</p>
 <pre class="r"><code>choicemodelr.data &lt;- cbind(x[, 1:3], x.coded, choice)
 head(choicemodelr.data)</code></pre>
-<pre><code>##        ID ques alt Brandlg Brandsamsung Price200 Price250 Price300
-## 1 ID_5886    1   1       0            0        1        0        0
-## 2 ID_5886    1   2       1            0        0        0        0
-## 3 ID_5886    1   3       0            1        1        0        0
-## 4 ID_5886    2   1       0            1        0        0        1
-## 5 ID_5886    2   2       0            1        0        0        0
-## 6 ID_5886    2   3       0            0        0        1        0
-##   Price350 Price400 SizeMocha Sizesmall choice
-## 1        0        0         0         0      1
-## 2        1        0         0         0      0
-## 3        0        0         0         1      0
-## 4        0        0         0         0      0
-## 5        1        0         1         0      2
-## 6        0        0         0         0      0</code></pre>
+<pre><code>##        ID ques alt BrandBMW BrandMercedes Price20000 Price25000 Price3000
+## 1 ID_5886    1   1        0             1          1          0         0
+## 2 ID_5886    1   2        1             0          0          0         0
+## 3 ID_5886    1   3        0             0          1          0         0
+## 4 ID_5886    2   1        0             0          0          0         1
+## 5 ID_5886    2   2        0             0          0          0         0
+## 6 ID_5886    2   3        0             1          0          1         0
+##   Price35000 Price40000 Colorgrey Colorred choice
+## 1          0          0         0        0      1
+## 2          1          0         0        0      0
+## 3          0          0         1        0      0
+## 4          0          0         0        0      0
+## 5          1          0         0        1      2
+## 6          0          0         0        0      0</code></pre>
 <p>Covariate: change sex into the name of your covariate</p>
 <pre class="r"><code>sex &lt;- x$sex[x$ques==1 &amp; x$alt==1]==&quot;Male &quot;# for each respondent
 sex &lt;- as.numeric(sex)
 demos &lt;- as.matrix(sex, nrow=length(sex))</code></pre>
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ3VzdG9tZXIgSW50ZWxsaWdlbmNlIgphdXRob3I6ICdbTGVvbmFyZCBIZW5yaXF1ZXpdKGh0dHBzOi8vZ2l0aHViLmNvbS9sZW9uYXJkLWhlbnJpcXVlei8pLCBbQWRyaWVuIExlcXVpbGxlcl0oaHR0cHM6Ly9naXRodWIuY29tL2FkcmllbmxlcXVpbGxlcikgJiBbRWRkeSBPaGF5b25dKGh0dHBzOi8vZ2l0aHViLmNvbS9FZGRvaGE1NSknCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCIKb3V0cHV0OiBodG1sX2RvY3VtZW50CmFsd2F5c19hbGxvd19odG1sOiB5ZXMKLS0tCgojIERhdGEgcHJlcGFyYXRpb24KCmBgYHtyIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0UsIGluY2x1ZGU9RkFMU0V9CiMgT3B0aW9ucwprbml0cjo6b3B0c19jaHVuayRzZXQoY2FjaGUgPSBUUlVFLCB3YXJuaW5nPUZBTFNFKQpgYGAKClJlYWQgaW4gdGhlIGRhdGEKCmBgYHtyfQojIGFsbCBhbHRlcm5hdGl2ZXMKeDwtcmVhZC5jc3YoImlucHV0LzE3MDkwODAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfeC5jc3YiKQp4JFByaWNlPC1hcy5mYWN0b3IoYXMuY2hhcmFjdGVyKHgkUHJpY2UpKQojIGNob2ljZSBwZXIgZGlzcGxheSBncm91cAp5PC1yZWFkLmNzdigiaW5wdXQvMTcwOTA4MDAwMDFfY29uam9pbnRfY2hvaWNlX2RhdF95LmNzdiIpCiMgZGVtb2dyYXBoaWMgaW5mb3JtYXRpb24KejwtcmVhZC5jc3YoImlucHV0LzE3MDkwODAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfei5jc3YiKQpgYGAKClRyYW5zZm9ybSB0aGUgZGF0YSBpbnRvIGxvbmcgZm9ybWF0CgpgYGB7cn0KY2hvaWNlc3BlcnF1ZXN0aW9uczwtMwoKeVsxLDJdCmZvciAoaSBpbiAxOm5yb3coeSkpCnsKICB5W2ksMl09KGktMSkqY2hvaWNlc3BlcnF1ZXN0aW9ucyt5W2ksMl0KfQoKeCRyZXNwb25zZTwtMApmb3IgKGkgaW4gMTpucm93KHkpKQp7CiAgaj15W2ksMl0KICB4W2osNl08LTEKfQoKeCRQcm9maWxlPC1OVUxMCmFsdGVybmF0aXZlPC0xCnF1ZXN0aW9uY291bnRlcjwtMQp4JHF1ZXM8LTAKeCRhbHQ8LTAKbGFzdGlkPC14WzEsMV0KZm9yIChpIGluIDE6bnJvdyh4KSkKewogIGlmKHhbaSwxXSE9bGFzdGlkKQogIHsKICAgIGxhc3RpZD14W2ksMV0KICAgIHF1ZXN0aW9uY291bnRlcjwtMAogIH0KICBpZihhbHRlcm5hdGl2ZTw9Y2hvaWNlc3BlcnF1ZXN0aW9ucykKICB7CiAgICB4W2ksNl08LXF1ZXN0aW9uY291bnRlcgogICAgeFtpLDddPC1hbHRlcm5hdGl2ZQogICAgYWx0ZXJuYXRpdmU8LWFsdGVybmF0aXZlKzEKICB9CiAgZWxzZQogIHsKICAgIHF1ZXN0aW9uY291bnRlcjwtcXVlc3Rpb25jb3VudGVyKzEKICAgIGFsdGVybmF0aXZlPC0xCiAgICB4W2ksNl08LXF1ZXN0aW9uY291bnRlcgogICAgeFtpLDddPC1hbHRlcm5hdGl2ZQogICAgYWx0ZXJuYXRpdmU8LWFsdGVybmF0aXZlKzEKICB9Cn0KeCA8LSB4W2MoMSw2LDcsMiwzLDQsNSldCiMgaW5zcGVjdCB0aGUgZGF0YSBmb3IgZXJyb3JzCgojIG1lcmdlIGEgdmFsaWQgY292YXJpYXRlIGhlcmU6IGluIG15IGNhc2Ugc2V4IG9yIFExLgp4PC1tZXJnZSh4LHosYnk9IklEIixhbGwueD1UUlVFKQpjb2xuYW1lcyh4KVs4XSA8LSAic2V4Igp4JFEyLjwtTlVMTApzdW1tYXJ5KHgpCmBgYAoKT3VyIGRhdGEgeCBpcyBub3cgaW4gdGhlIGxvbmcgZm9ybWF0IHNvIHlvdSBjYW4gbGF1bmNoIHRoZSBmaXJzdCB0d28gc29sdXRpb24gbWV0aG9kcwoKIyBBbmFseXNpcwoKVXNlIHVuZGVyc3RhbmRpbmcgY29kZSB0byBtYWtlIGl0IHJlYWR5IGZvciB0aGUgdGhpcmQgbWV0aG9kIChIaWVyYXJjaGljYWwgQmF5ZXMgbXVsdGlub21pYWwgbG9naXQpCgpgYGB7cn0KY2hvaWNlIDwtIHJlcCgwLCBucm93KHgpKQpjaG9pY2VbeFssInJlc3BvbnNlIl09PTFdIDwtIHhbeFssInJlc3BvbnNlIl09PTEsImFsdCJdCmBgYAoKSW5kaWNhdGUgd2hpY2ggb3V0IG9mIHRoZSAzIGFsdGVybmF0aXZlcyBwZXIgcXVlc3Rpb24gaXMgY2hvc2VuCgpgYGB7cn0KaGVhZChjaG9pY2UpCmBgYAoKQ29udmVydCB0aGUgZmFjdG9yIGxldmVscyB0byBkdW1taWVzOiBjaGFuZ2UgdGhlIG5hbWUgb2YgZmFjdG9yIHRvIHlvdXIgZmFjdG9yIG5hbWVzCgpgYGB7cn0KeC5jb2RlZCA8LSBtb2RlbC5tYXRyaXgofiBCcmFuZCArIFByaWNlICsgU2l6ZSwgZGF0YSA9IHgpICMgY2hhbmdlIHRoaXMgdG8geW91ciBvd24gZmFjdG9ycwp4LmNvZGVkIDwtIHguY29kZWRbLCAtMV0gIyByZW1vdmUgdGhlIGludGVyY2VwdApgYGAKCkNvbWJpbmUgZXZlcnl0aGluZyBiYWNrIGludG8gYSBkZgoKYGBge3J9CmNob2ljZW1vZGVsci5kYXRhIDwtIGNiaW5kKHhbLCAxOjNdLCB4LmNvZGVkLCBjaG9pY2UpCmhlYWQoY2hvaWNlbW9kZWxyLmRhdGEpCmBgYAoKQ292YXJpYXRlOiBjaGFuZ2Ugc2V4IGludG8gdGhlIG5hbWUgb2YgeW91ciBjb3ZhcmlhdGUKCmBgYHtyfQpzZXggPC0geCRzZXhbeCRxdWVzPT0xICYgeCRhbHQ9PTFdPT0iTWFsZSAiIyBmb3IgZWFjaCByZXNwb25kZW50CnNleCA8LSBhcy5udW1lcmljKHNleCkKZGVtb3MgPC0gYXMubWF0cml4KHNleCwgbnJvdz1sZW5ndGgoc2V4KSkKYGBg</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ3VzdG9tZXIgSW50ZWxsaWdlbmNlIgphdXRob3I6ICdbTGVvbmFyZCBIZW5yaXF1ZXpdKGh0dHBzOi8vZ2l0aHViLmNvbS9sZW9uYXJkLWhlbnJpcXVlei8pLCBbQWRyaWVuIExlcXVpbGxlcl0oaHR0cHM6Ly9naXRodWIuY29tL2FkcmllbmxlcXVpbGxlcikgJiBbRWRkeSBPaGF5b25dKGh0dHBzOi8vZ2l0aHViLmNvbS9FZGRvaGE1NSknCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCIKb3V0cHV0OiBodG1sX2RvY3VtZW50CmFsd2F5c19hbGxvd19odG1sOiB5ZXMKLS0tCgojIERhdGEgcHJlcGFyYXRpb24KCmBgYHtyIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0UsIGluY2x1ZGU9RkFMU0V9CiMgT3B0aW9ucwprbml0cjo6b3B0c19jaHVuayRzZXQoY2FjaGUgPSBUUlVFLCB3YXJuaW5nPUZBTFNFKQpgYGAKClJlYWQgaW4gdGhlIGRhdGEKCmBgYHtyfQojIGFsbCBhbHRlcm5hdGl2ZXMKeDwtcmVhZC5jc3YoImlucHV0LzE5MDE5NzAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfWC5jc3YiKQojeCRQcmljZTwtYXMuZmFjdG9yKGFzLmNoYXJhY3Rlcih4JFByaWNlKSkKIyBjaG9pY2UgcGVyIGRpc3BsYXkgZ3JvdXAKeTwtcmVhZC5jc3YoImlucHV0LzE5MDE5NzAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfeS5jc3YiKQojIGRlbW9ncmFwaGljIGluZm9ybWF0aW9uCno8LXJlYWQuY3N2KCJpbnB1dC8xOTAxOTcwMDAwMV9jb25qb2ludF9jaG9pY2VfZGF0X1ouY3N2IikKYGBgCgpUcmFuc2Zvcm0gdGhlIGRhdGEgaW50byBsb25nIGZvcm1hdAoKYGBge3J9CmNob2ljZXNwZXJxdWVzdGlvbnM8LTMKCnlbMSwyXQpmb3IgKGkgaW4gMTpucm93KHkpKQp7CiAgeVtpLDJdPShpLTEpKmNob2ljZXNwZXJxdWVzdGlvbnMreVtpLDJdCn0KCngkcmVzcG9uc2U8LTAKZm9yIChpIGluIDE6bnJvdyh5KSkKewogIGo9eVtpLDJdCiAgeFtqLDhdPC0xCn0KCngkUHJvZmlsZTwtTlVMTAphbHRlcm5hdGl2ZTwtMQpxdWVzdGlvbmNvdW50ZXI8LTEKeCRxdWVzPC0wCngkYWx0PC0wCmxhc3RpZDwteFsxLDFdCmZvciAoaSBpbiAxOm5yb3coeCkpCnsKICBpZih4W2ksMV0hPWxhc3RpZCkKICB7CiAgICBsYXN0aWQ9eFtpLDFdCiAgICBxdWVzdGlvbmNvdW50ZXI8LTAKICB9CiAgaWYoYWx0ZXJuYXRpdmU8PWNob2ljZXNwZXJxdWVzdGlvbnMpCiAgewogICAgeFtpLDhdPC1xdWVzdGlvbmNvdW50ZXIKICAgIHhbaSw5XTwtYWx0ZXJuYXRpdmUKICAgIGFsdGVybmF0aXZlPC1hbHRlcm5hdGl2ZSsxCiAgfQogIGVsc2UKICB7CiAgICBxdWVzdGlvbmNvdW50ZXI8LXF1ZXN0aW9uY291bnRlcisxCiAgICBhbHRlcm5hdGl2ZTwtMQogICAgeFtpLDhdPC1xdWVzdGlvbmNvdW50ZXIKICAgIHhbaSw5XTwtYWx0ZXJuYXRpdmUKICAgIGFsdGVybmF0aXZlPC1hbHRlcm5hdGl2ZSsxCiAgfQp9CgojIG1lcmdlIGEgdmFsaWQgY292YXJpYXRlIGhlcmU6IGluIG15IGNhc2Ugc2V4IG9yIFExLgp4PC1tZXJnZSh4LHosYnk9IklEIixhbGwueD1UUlVFKQpjb2xuYW1lcyh4KVsxMF0gPC0gInNleCIKY29sbmFtZXMoeClbMTFdIDwtICJwZXJjZXB0aW9uIgp4JFEyLjwtTlVMTApzdW1tYXJ5KHgpCmBgYAoKT3VyIGRhdGEgeCBpcyBub3cgaW4gdGhlIGxvbmcgZm9ybWF0IHNvIHlvdSBjYW4gbGF1bmNoIHRoZSBmaXJzdCB0d28gc29sdXRpb24gbWV0aG9kcwoKIyBBbmFseXNpcwoKVXNlIHVuZGVyc3RhbmRpbmcgY29kZSB0byBtYWtlIGl0IHJlYWR5IGZvciB0aGUgdGhpcmQgbWV0aG9kIChIaWVyYXJjaGljYWwgQmF5ZXMgbXVsdGlub21pYWwgbG9naXQpCgpgYGB7cn0KY2hvaWNlIDwtIHJlcCgwLCBucm93KHgpKQpjaG9pY2VbeFssInJlc3BvbnNlIl09PTFdIDwtIHhbeFssInJlc3BvbnNlIl09PTEsImFsdCJdCmBgYAoKSW5kaWNhdGUgd2hpY2ggb3V0IG9mIHRoZSAzIGFsdGVybmF0aXZlcyBwZXIgcXVlc3Rpb24gaXMgY2hvc2VuCgpgYGB7cn0KaGVhZChjaG9pY2UpCmBgYAoKQ29udmVydCB0aGUgZmFjdG9yIGxldmVscyB0byBkdW1taWVzOiBjaGFuZ2UgdGhlIG5hbWUgb2YgZmFjdG9yIHRvIHlvdXIgZmFjdG9yIG5hbWVzCgpgYGB7cn0KeC5jb2RlZCA8LSBtb2RlbC5tYXRyaXgofiBCcmFuZCArIFByaWNlICsgVHlwZSArIEdlYXIgKyBPcHRpb25zLCBkYXRhID0geCkgIyBjaGFuZ2UgdGhpcyB0byB5b3VyIG93biBmYWN0b3JzCnguY29kZWQgPC0geC5jb2RlZFssIC0xXSAjIHJlbW92ZSB0aGUgaW50ZXJjZXB0CmBgYAoKQ29tYmluZSBldmVyeXRoaW5nIGJhY2sgaW50byBhIGRmCgpgYGB7cn0KY2hvaWNlbW9kZWxyLmRhdGEgPC0gY2JpbmQoeFssIDE6M10sIHguY29kZWQsIGNob2ljZSkKaGVhZChjaG9pY2Vtb2RlbHIuZGF0YSkKYGBgCgpDb3ZhcmlhdGU6IGNoYW5nZSBzZXggaW50byB0aGUgbmFtZSBvZiB5b3VyIGNvdmFyaWF0ZQoKYGBge3J9CnNleCA8LSB4JHNleFt4JHF1ZXM9PTEgJiB4JGFsdD09MV09PSJNYWxlICIjIGZvciBlYWNoIHJlc3BvbmRlbnQKc2V4IDwtIGFzLm51bWVyaWMoc2V4KQpkZW1vcyA8LSBhcy5tYXRyaXgoc2V4LCBucm93PWxlbmd0aChzZXgpKQpgYGAK</div>
 
 
 

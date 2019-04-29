@@ -17,12 +17,12 @@ Read in the data
 
 ```{r}
 # all alternatives
-x<-read.csv("input/17090800001_conjoint_choice_dat_x.csv")
-x$Price<-as.factor(as.character(x$Price))
+x<-read.csv("input/19019700001_conjoint_choice_dat_X.csv")
+#x$Price<-as.factor(as.character(x$Price))
 # choice per display group
-y<-read.csv("input/17090800001_conjoint_choice_dat_y.csv")
+y<-read.csv("input/19019700001_conjoint_choice_dat_y.csv")
 # demographic information
-z<-read.csv("input/17090800001_conjoint_choice_dat_z.csv")
+z<-read.csv("input/19019700001_conjoint_choice_dat_Z.csv")
 ```
 
 Transform the data into long format
@@ -40,7 +40,7 @@ x$response<-0
 for (i in 1:nrow(y))
 {
   j=y[i,2]
-  x[j,6]<-1
+  x[j,8]<-1
 }
 
 x$Profile<-NULL
@@ -58,25 +58,24 @@ for (i in 1:nrow(x))
   }
   if(alternative<=choicesperquestions)
   {
-    x[i,6]<-questioncounter
-    x[i,7]<-alternative
+    x[i,8]<-questioncounter
+    x[i,9]<-alternative
     alternative<-alternative+1
   }
   else
   {
     questioncounter<-questioncounter+1
     alternative<-1
-    x[i,6]<-questioncounter
-    x[i,7]<-alternative
+    x[i,8]<-questioncounter
+    x[i,9]<-alternative
     alternative<-alternative+1
   }
 }
-x <- x[c(1,6,7,2,3,4,5)]
-# inspect the data for errors
 
 # merge a valid covariate here: in my case sex or Q1.
 x<-merge(x,z,by="ID",all.x=TRUE)
-colnames(x)[8] <- "sex"
+colnames(x)[10] <- "sex"
+colnames(x)[11] <- "perception"
 x$Q2.<-NULL
 summary(x)
 ```
@@ -101,7 +100,7 @@ head(choice)
 Convert the factor levels to dummies: change the name of factor to your factor names
 
 ```{r}
-x.coded <- model.matrix(~ Brand + Price + Size, data = x) # change this to your own factors
+x.coded <- model.matrix(~ Brand + Price + Type + Gear + Options, data = x) # change this to your own factors
 x.coded <- x.coded[, -1] # remove the intercept
 ```
 
