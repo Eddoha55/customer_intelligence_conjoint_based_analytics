@@ -1,6 +1,6 @@
 # Customer intelligence ![language](https://img.shields.io/badge/language-R-blue.svg)
 
-> Customer analytics project on PokemonGo
+> Customer intelligence project
 
 This assignment was originally given at EDHEC Business School. The wording is available [here](Assignment.pdf).
 
