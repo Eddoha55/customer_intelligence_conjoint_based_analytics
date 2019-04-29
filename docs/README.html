@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title></title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("README.md");
+});
+</script>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Customer intelligence</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+
+</div>
+
+
+<div id="pokemongo-customer-analytics-language" class="section level1">
+<h1>PokemonGo customer analytics <img src="https://img.shields.io/badge/language-R-blue.svg" alt="language" /></h1>
+<blockquote>
+<p>Customer analytics project on PokemonGo</p>
+</blockquote>
+<p>This assignment was originally given at EDHEC Business School. The wording is available <a href="Assignment.pdf">here</a>.</p>
+<div id="books-table-of-contents" class="section level2">
+<h2>:books: Table of Contents</h2>
+<ul>
+<li><a href="#package-installation">Installation</a></li>
+<li><a href="#rocket-usage">Usage</a></li>
+<li><a href="#hammer_and_wrench-support">Support</a></li>
+<li><a href="#memo-contributing">Contributing</a></li>
+</ul>
+</div>
+<div id="package-installation" class="section level2">
+<h2>:package: Installation</h2>
+<p>Clone repo</p>
+<pre class="sh"><code>git clone https://github.com/leonard-henriquez/PokemonGo</code></pre>
+</div>
+<div id="rocket-usage" class="section level2">
+<h2>:rocket: Usage</h2>
+<p>Open project.Rproj with RStudio and then open index.rmd</p>
+<p>You can rebuild the website from RStudio if needed</p>
+</div>
+<div id="hammer_and_wrench-support" class="section level2">
+<h2>:hammer_and_wrench: Support</h2>
+<p>Please <a href="https://github.com/leonard-henriquez/readme-boilerplate/issues/new">open an issue</a> for support.</p>
+</div>
+<div id="memo-contributing" class="section level2">
+<h2>:memo: Contributing</h2>
+<p>Please contribute using <a href="https://guides.github.com/introduction/flow/">Github Flow</a>. Create a branch, add commits, and <a href="https://github.com/leonard-henriquez/readme-boilerplate/compare/">open a pull request</a>.</p>
+</div>
+</div>
+
+<div id="rmd-source-code">IyBQb2tlbW9uR28gY3VzdG9tZXIgYW5hbHl0aWNzICFbbGFuZ3VhZ2VdKGh0dHBzOi8vaW1nLnNoaWVsZHMuaW8vYmFkZ2UvbGFuZ3VhZ2UtUi1ibHVlLnN2ZykNCg0KPiBDdXN0b21lciBhbmFseXRpY3MgcHJvamVjdCBvbiBQb2tlbW9uR28NCg0KVGhpcyBhc3NpZ25tZW50IHdhcyBvcmlnaW5hbGx5IGdpdmVuIGF0IEVESEVDIEJ1c2luZXNzIFNjaG9vbC4gVGhlIHdvcmRpbmcgaXMgYXZhaWxhYmxlIFtoZXJlXShBc3NpZ25tZW50LnBkZikuDQoNCiMjIDpib29rczogVGFibGUgb2YgQ29udGVudHMNCg0KLSBbSW5zdGFsbGF0aW9uXSgjcGFja2FnZS1pbnN0YWxsYXRpb24pDQotIFtVc2FnZV0oI3JvY2tldC11c2FnZSkNCi0gW1N1cHBvcnRdKCNoYW1tZXJfYW5kX3dyZW5jaC1zdXBwb3J0KQ0KLSBbQ29udHJpYnV0aW5nXSgjbWVtby1jb250cmlidXRpbmcpDQoNCiMjIDpwYWNrYWdlOiBJbnN0YWxsYXRpb24NCg0KQ2xvbmUgcmVwbw0KDQpgYGBzaA0KZ2l0IGNsb25lIGh0dHBzOi8vZ2l0aHViLmNvbS9sZW9uYXJkLWhlbnJpcXVlei9Qb2tlbW9uR28NCmBgYA0KDQojIyA6cm9ja2V0OiBVc2FnZQ0KDQpPcGVuIHByb2plY3QuUnByb2ogd2l0aCBSU3R1ZGlvIGFuZCB0aGVuIG9wZW4gaW5kZXgucm1kDQoNCllvdSBjYW4gcmVidWlsZCB0aGUgd2Vic2l0ZSBmcm9tIFJTdHVkaW8gaWYgbmVlZGVkDQoNCiMjIDpoYW1tZXJfYW5kX3dyZW5jaDogU3VwcG9ydA0KDQpQbGVhc2UgW29wZW4gYW4gaXNzdWVdKGh0dHBzOi8vZ2l0aHViLmNvbS9sZW9uYXJkLWhlbnJpcXVlei9yZWFkbWUtYm9pbGVycGxhdGUvaXNzdWVzL25ldykgZm9yIHN1cHBvcnQuDQoNCiMjIDptZW1vOiBDb250cmlidXRpbmcNCg0KUGxlYXNlIGNvbnRyaWJ1dGUgdXNpbmcgW0dpdGh1YiBGbG93XShodHRwczovL2d1aWRlcy5naXRodWIuY29tL2ludHJvZHVjdGlvbi9mbG93LykuIENyZWF0ZSBhIGJyYW5jaCwgYWRkIGNvbW1pdHMsIGFuZCBbb3BlbiBhIHB1bGwgcmVxdWVzdF0oaHR0cHM6Ly9naXRodWIuY29tL2xlb25hcmQtaGVucmlxdWV6L3JlYWRtZS1ib2lsZXJwbGF0ZS9jb21wYXJlLykuDQo=</div>
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

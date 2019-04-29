@@ -1,0 +1,9 @@
+name: "Customer intelligence"
+output_dir: "docs"
+navbar:
+  title: "Customer intelligence"
+output:
+  html_document:
+    theme: cosmo
+    code_download: true
+    css: style.css

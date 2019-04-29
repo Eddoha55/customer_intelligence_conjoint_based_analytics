@@ -1,0 +1,121 @@
+---
+title: "Customer Intelligence"
+author: '[Leonard Henriquez](https://github.com/leonard-henriquez/), [Adrien Lequiller](https://github.com/adrienlequiller) & [Eddy Ohayon](https://github.com/Eddoha55)'
+date: "`r Sys.Date()`"
+output: html_document
+always_allow_html: yes
+---
+
+# Data preparation
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# Options
+knitr::opts_chunk$set(cache = TRUE, warning=FALSE)
+```
+
+Read in the data
+
+```{r}
+# all alternatives
+x<-read.csv("input/17090800001_conjoint_choice_dat_x.csv")
+x$Price<-as.factor(as.character(x$Price))
+# choice per display group
+y<-read.csv("input/17090800001_conjoint_choice_dat_y.csv")
+# demographic information
+z<-read.csv("input/17090800001_conjoint_choice_dat_z.csv")
+```
+
+Transform the data into long format
+
+```{r}
+choicesperquestions<-3
+
+y[1,2]
+for (i in 1:nrow(y))
+{
+  y[i,2]=(i-1)*choicesperquestions+y[i,2]
+}
+
+x$response<-0
+for (i in 1:nrow(y))
+{
+  j=y[i,2]
+  x[j,6]<-1
+}
+
+x$Profile<-NULL
+alternative<-1
+questioncounter<-1
+x$ques<-0
+x$alt<-0
+lastid<-x[1,1]
+for (i in 1:nrow(x))
+{
+  if(x[i,1]!=lastid)
+  {
+    lastid=x[i,1]
+    questioncounter<-0
+  }
+  if(alternative<=choicesperquestions)
+  {
+    x[i,6]<-questioncounter
+    x[i,7]<-alternative
+    alternative<-alternative+1
+  }
+  else
+  {
+    questioncounter<-questioncounter+1
+    alternative<-1
+    x[i,6]<-questioncounter
+    x[i,7]<-alternative
+    alternative<-alternative+1
+  }
+}
+x <- x[c(1,6,7,2,3,4,5)]
+# inspect the data for errors
+
+# merge a valid covariate here: in my case sex or Q1.
+x<-merge(x,z,by="ID",all.x=TRUE)
+colnames(x)[8] <- "sex"
+x$Q2.<-NULL
+summary(x)
+```
+
+Our data x is now in the long format so you can launch the first two solution methods
+
+# Analysis
+
+Use understanding code to make it ready for the third method (Hierarchical Bayes multinomial logit)
+
+```{r}
+choice <- rep(0, nrow(x))
+choice[x[,"response"]==1] <- x[x[,"response"]==1,"alt"]
+```
+
+Indicate which out of the 3 alternatives per question is chosen
+
+```{r}
+head(choice)
+```
+
+Convert the factor levels to dummies: change the name of factor to your factor names
+
+```{r}
+x.coded <- model.matrix(~ Brand + Price + Size, data = x) # change this to your own factors
+x.coded <- x.coded[, -1] # remove the intercept
+```
+
+Combine everything back into a df
+
+```{r}
+choicemodelr.data <- cbind(x[, 1:3], x.coded, choice)
+head(choicemodelr.data)
+```
+
+Covariate: change sex into the name of your covariate
+
+```{r}
+sex <- x$sex[x$ques==1 & x$alt==1]=="Male "# for each respondent
+sex <- as.numeric(sex)
+demos <- as.matrix(sex, nrow=length(sex))
+```
