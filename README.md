@@ -1,4 +1,4 @@
-# PokemonGo customer analytics ![language](https://img.shields.io/badge/language-R-blue.svg)
+# Customer intelligence ![language](https://img.shields.io/badge/language-R-blue.svg)
 
 > Customer analytics project on PokemonGo
 
@@ -16,7 +16,7 @@ This assignment was originally given at EDHEC Business School. The wording is av
 Clone repo
 
 ```sh
-git clone https://github.com/leonard-henriquez/PokemonGo
+git clone https://github.com/leonard-henriquez/customer-intelligence
 ```
 
 ## :rocket: Usage
@@ -27,8 +27,8 @@ You can rebuild the website from RStudio if needed
 
 ## :hammer_and_wrench: Support
 
-Please [open an issue](https://github.com/leonard-henriquez/readme-boilerplate/issues/new) for support.
+Please [open an issue](https://github.com/leonard-henriquez/customer-intelligence/issues/new) for support.
 
 ## :memo: Contributing
 
-Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/leonard-henriquez/readme-boilerplate/compare/).
+Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/leonard-henriquez/customer-intelligence/compare/).
