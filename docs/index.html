@@ -11,7 +11,7 @@
 
 <meta name="author" content="Leonard Henriquez, Adrien Lequiller &amp; Eddy Ohayon" />
 
-<meta name="date" content="2019-04-29" />
+<meta name="date" content="2019-04-30" />
 
 <title>Customer Intelligence</title>
 
@@ -321,7 +321,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Customer Intelligence</h1>
 <h4 class="author"><a href="https://github.com/leonard-henriquez/">Leonard Henriquez</a>, <a href="https://github.com/adrienlequiller">Adrien Lequiller</a> &amp; <a href="https://github.com/Eddoha55">Eddy Ohayon</a></h4>
-<h4 class="date">2019-04-29</h4>
+<h4 class="date">2019-04-30</h4>
 
 </div>
 
@@ -331,26 +331,26 @@ $(document).ready(function () {
 <p>Read in the data</p>
 <pre class="r"><code># all alternatives
 x&lt;-read.csv(&quot;input/19019700001_conjoint_choice_dat_X.csv&quot;)
-#x$Price&lt;-as.factor(as.character(x$Price))
+
 # choice per display group
 y&lt;-read.csv(&quot;input/19019700001_conjoint_choice_dat_y.csv&quot;)
+
 # demographic information
-z&lt;-read.csv(&quot;input/19019700001_conjoint_choice_dat_Z.csv&quot;)</code></pre>
+z&lt;-read.csv(&quot;input/19019700001_conjoint_choice_dat_Z.csv&quot;)
+colnames(z)[2:4] &lt;- c(&quot;sex&quot;, &quot;age&quot;, &quot;perception&quot;)</code></pre>
 <p>Transform the data into long format</p>
 <pre class="r"><code>choicesperquestions&lt;-3
 
-y[1,2]</code></pre>
-<pre><code>## [1] 1</code></pre>
-<pre class="r"><code>for (i in 1:nrow(y))
-{
-  y[i,2]=(i-1)*choicesperquestions+y[i,2]
-}
-
-x$response&lt;-0
 for (i in 1:nrow(y))
 {
-  j=y[i,2]
-  x[j,8]&lt;-1
+  y[i,&quot;y&quot;]=(i-1)*choicesperquestions+y[i,&quot;y&quot;]
+}
+
+x$choice&lt;-0
+for (i in 1:nrow(y))
+{
+  j=y[i,&quot;y&quot;]
+  x[j,&quot;choice&quot;]&lt;-1
 }
 
 x$Profile&lt;-NULL
@@ -368,43 +368,41 @@ for (i in 1:nrow(x))
   }
   if(alternative&lt;=choicesperquestions)
   {
-    x[i,8]&lt;-questioncounter
-    x[i,9]&lt;-alternative
+    x[i,&quot;ques&quot;]&lt;-questioncounter
+    x[i,&quot;alt&quot;]&lt;-alternative
     alternative&lt;-alternative+1
   }
   else
   {
     questioncounter&lt;-questioncounter+1
     alternative&lt;-1
-    x[i,8]&lt;-questioncounter
-    x[i,9]&lt;-alternative
+    x[i,&quot;ques&quot;]&lt;-questioncounter
+    x[i,&quot;alt&quot;]&lt;-alternative
     alternative&lt;-alternative+1
   }
 }
+x[,&quot;choice&quot;] &lt;- x[,&quot;choice&quot;] == 1
 
-# merge a valid covariate here: in my case sex or Q1.
+# merge a valid covariate here: in my case sex, age, perception.
 x&lt;-merge(x,z,by=&quot;ID&quot;,all.x=TRUE)
-colnames(x)[10] &lt;- &quot;sex&quot;
-colnames(x)[11] &lt;- &quot;perception&quot;
-x$Q2.&lt;-NULL
 summary(x)</code></pre>
-<pre><code>##         ID           Brand         Price             Type         Gear    
-##  ID_10782: 18   Audi    :298   Min.   :15000   berline :298   auto  :452  
-##  ID_10785: 18   BMW     :285   1st Qu.:15000   city car:312   manual:448  
-##  ID_10834: 18   Mercedes:317   Median :20000   SUV     :290               
-##  ID_10835: 18                  Mean   :20994                              
-##  ID_10836: 18                  3rd Qu.:25000                              
-##  ID_10841: 18                  Max.   :30000                              
+<pre><code>##         ID           brand         price             type         gear    
+##  ID_10782: 18   Audi    :298   Min.   :15.00   berline :298   auto  :452  
+##  ID_10785: 18   BMW     :285   1st Qu.:15.00   city_car:312   manual:448  
+##  ID_10834: 18   Mercedes:317   Median :20.00   SUV     :290               
+##  ID_10835: 18                  Mean   :20.99                              
+##  ID_10836: 18                  3rd Qu.:25.00                              
+##  ID_10841: 18                  Max.   :30.00                              
 ##  (Other) :792                                                             
-##  Options       response           ques          alt        sex     
-##  all :317   Min.   :0.0000   Min.   :1.0   Min.   :1   Female:486  
-##  none:269   1st Qu.:0.0000   1st Qu.:2.0   1st Qu.:1   Male  :414  
-##  some:314   Median :0.0000   Median :3.5   Median :2               
-##             Mean   :0.3333   Mean   :3.5   Mean   :2               
-##             3rd Qu.:1.0000   3rd Qu.:5.0   3rd Qu.:3               
-##             Max.   :1.0000   Max.   :6.0   Max.   :3               
-##                                                                    
-##            perception           Q3.     
+##  options      choice             ques          alt        sex     
+##  all :317   Mode :logical   Min.   :1.0   Min.   :1   Female:486  
+##  none:269   FALSE:600       1st Qu.:2.0   1st Qu.:1   Male  :414  
+##  some:314   TRUE :300       Median :3.5   Median :2               
+##                             Mean   :3.5   Mean   :2               
+##                             3rd Qu.:5.0   3rd Qu.:3               
+##                             Max.   :6.0   Max.   :3               
+##                                                                   
+##               age            perception 
 ##  18_24_years_old:702   Indifferent:108  
 ##  25_34_years_old:162   Negative   : 54  
 ##  45_54_years_old: 18   Positive   :738  
@@ -416,39 +414,330 @@ summary(x)</code></pre>
 </div>
 <div id="analysis" class="section level1">
 <h1>Analysis</h1>
-<p>Use understanding code to make it ready for the third method (Hierarchical Bayes multinomial logit)</p>
-<pre class="r"><code>choice &lt;- rep(0, nrow(x))
-choice[x[,&quot;response&quot;]==1] &lt;- x[x[,&quot;response&quot;]==1,&quot;alt&quot;]</code></pre>
-<p>Indicate which out of the 3 alternatives per question is chosen</p>
-<pre class="r"><code>head(choice)</code></pre>
-<pre><code>## [1] 1 0 0 0 2 0</code></pre>
-<p>Convert the factor levels to dummies: change the name of factor to your factor names</p>
-<pre class="r"><code>x.coded &lt;- model.matrix(~ Brand + Price + Type + Gear + Options, data = x) # change this to your own factors
-x.coded &lt;- x.coded[, -1] # remove the intercept</code></pre>
-<p>Combine everything back into a df</p>
-<pre class="r"><code>choicemodelr.data &lt;- cbind(x[, 1:3], x.coded, choice)
-head(choicemodelr.data)</code></pre>
-<pre><code>##        ID ques alt BrandBMW BrandMercedes Price20000 Price25000 Price3000
-## 1 ID_5886    1   1        0             1          1          0         0
-## 2 ID_5886    1   2        1             0          0          0         0
-## 3 ID_5886    1   3        0             0          1          0         0
-## 4 ID_5886    2   1        0             0          0          0         1
-## 5 ID_5886    2   2        0             0          0          0         0
-## 6 ID_5886    2   3        0             1          0          1         0
-##   Price35000 Price40000 Colorgrey Colorred choice
-## 1          0          0         0        0      1
-## 2          1          0         0        0      0
-## 3          0          0         1        0      0
-## 4          0          0         0        0      0
-## 5          1          0         0        1      2
-## 6          0          0         0        0      0</code></pre>
-<p>Covariate: change sex into the name of your covariate</p>
-<pre class="r"><code>sex &lt;- x$sex[x$ques==1 &amp; x$alt==1]==&quot;Male &quot;# for each respondent
-sex &lt;- as.numeric(sex)
-demos &lt;- as.matrix(sex, nrow=length(sex))</code></pre>
+<p>Let’s explore the data to see the choices for each possible alternative</p>
+<pre class="r"><code># Price
+xtabs(choice~price,data=x)</code></pre>
+<pre><code>## price
+##  15  20  25  30 
+## 111  97  47  45</code></pre>
+<pre class="r"><code># Brand
+xtabs(choice~brand,data=x)</code></pre>
+<pre><code>## brand
+##     Audi      BMW Mercedes 
+##      125      110       65</code></pre>
+<pre class="r"><code># Type
+xtabs(choice~type,data=x)</code></pre>
+<pre><code>## type
+##  berline city_car      SUV 
+##      100       88      112</code></pre>
+<pre class="r"><code># Gear
+xtabs(choice~gear,data=x)</code></pre>
+<pre><code>## gear
+##   auto manual 
+##    147    153</code></pre>
+<pre class="r"><code># Options
+xtabs(choice~options,data=x)</code></pre>
+<pre><code>## options
+##  all none some 
+##  148   50  102</code></pre>
+<p>Creation d’un model multinomial</p>
+<pre class="r"><code>car.mlogit &lt;- mlogit.data(data=x, choice=&quot;choice&quot;, shape=&quot;long&quot;, alt.levels=paste(&quot;pos&quot;,1:3), id.var=&quot;ID&quot;)
+m1&lt;-mlogit(choice ~ 0 + brand + price + type + gear + options, data=car.mlogit)
+summary(m1)</code></pre>
+<pre><code>## 
+## Call:
+## mlogit(formula = choice ~ 0 + brand + price + type + gear + options, 
+##     data = car.mlogit, method = &quot;nr&quot;)
+## 
+## Frequencies of alternatives:
+##   pos 1   pos 2   pos 3 
+## 0.35000 0.34667 0.30333 
+## 
+## nr method
+## 4 iterations, 0h:0m:0s 
+## g&#39;(-H)^-1g = 2.57E-07 
+## gradient close to zero 
+## 
+## Coefficients :
+##                Estimate Std. Error z-value  Pr(&gt;|z|)    
+## brandBMW       0.031020   0.182134  0.1703 0.8647653    
+## brandMercedes -0.972815   0.192012 -5.0664 4.053e-07 ***
+## price         -0.036602   0.014874 -2.4608 0.0138609 *  
+## typecity_car  -0.315267   0.184744 -1.7065 0.0879124 .  
+## typeSUV        0.110474   0.193149  0.5720 0.5673474    
+## gearmanual     0.163265   0.157313  1.0378 0.2993458    
+## optionsnone   -1.406673   0.206892 -6.7991 1.053e-11 ***
+## optionssome   -0.657057   0.175672 -3.7403 0.0001838 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Log-Likelihood: -278.34</code></pre>
+<p>Analyse: - Le type de transmission n’a pas d’impact significatif sur le choix d’une voiture - Marque: pas de différence significative entre Audi et BMW, mais par contre la “willingness to pay”&quot; d’un client pour une Mercedes est plus faible de 26577.99 euros (faire apparaitre le calcul coef(m1)[“brandMercedes”]/coef(m1)[“price”] ) et préciser quece chiffre reflète certainement un biais d’échantillon - Price: le prix a un impact significatif sur le choix - Type: pas d’impact que ça soit une berline ou un SUV, par contre une city_car baisse la willingness to pay de 8613.325 euros (coef(m1)[“typecity_car”]/coef(m1)[“price”]) - Options: a un impact significatif</p>
+<p>Maintenant essayons de prévoir les part de marché de BMW, Audi et Mercedes en fonction des caractéristiques de leurs voitures</p>
+<pre class="r"><code>predict.mnl &lt;- function(model, data) {
+  # Function for predicting shares from a multinomial logit model
+  # model: mlogit object returned by mlogit()
+  # data: a data frame containing the set of designs for which you want to
+  # predict shares. Same format as the data used to estimate model.
+  data.model &lt;- model.matrix(update(model$formula, 0 ~ .), data = data)[,-1]
+  utility &lt;- data.model %*% model$coef#marix multiplication
+  share &lt;- exp(utility)/sum(exp(utility))#convert set back to prob
+  cbind(share, data)
+}
+
+car0 &lt;- c(brand=&quot;BMW&quot;, price=15, type=&quot;city_car&quot;, gear=&quot;manual&quot;, options=&quot;all&quot;)
+car1 &lt;- c(brand=&quot;BMW&quot;, price=20, type=&quot;SUV&quot;, gear=&quot;auto&quot;, options=&quot;some&quot;)
+car2 &lt;- c(brand=&quot;Mercedes&quot;, price=15, type=&quot;city_car&quot;,  gear=&quot;manual&quot;, options=&quot;some&quot;)
+car3 &lt;- c(brand=&quot;Mercedes&quot;, price=20, type=&quot;Berline&quot;,  gear=&quot;auto&quot;, options=&quot;none&quot;)
+car4 &lt;- c(brand=&quot;Audi&quot;, price=25, type=&quot;Berline&quot;,  gear=&quot;manual&quot;, options=&quot;some&quot;)
+car5 &lt;- c(brand=&quot;Audi&quot;, price=25, type=&quot;SUV&quot;,  gear=&quot;auto&quot;, options=&quot;some&quot;)
+cars &lt;- data.frame(rbind(car0, car1, car2, car3, car4, car5))
+cars$price &lt;- as.numeric(as.character(cars$price))
+
+predict.mnl(m1, cars)</code></pre>
+<pre><code>##           share    brand price     type   gear options
+## car0 0.36113778      BMW    15 city_car manual     all
+## car1 0.20268787      BMW    20      SUV   auto    some
+## car2 0.06860514 Mercedes    15 city_car manual    some
+## car3 0.03142937 Mercedes    20  Berline   auto    none
+## car4 0.17250519     Audi    25  Berline manual    some
+## car5 0.16363465     Audi    25      SUV   auto    some</code></pre>
+<pre class="r"><code># create a grid with all possible design and select the ones we are interested in (in general the ones your company is offering)
+#attrib&lt;-list(seat=c(&quot;6&quot;,&quot;7&quot;,&quot;8&quot;),cargo=c(&quot;2ft&quot;,&quot;3ft&quot;),eng=c(&quot;gas&quot;,&quot;hyb&quot;,&quot;elec&quot;),price=c(&quot;30&quot;,&quot;35&quot;,&quot;40&quot;))
+#total amount of combinations: 3*2*3*3=54
+#(new.data&lt;-expand.grid(attrib)[c(8,1,3,41,49,26),])#randomly pick a few combos as &quot;real&quot; market options
+#predict.mnl(m3,new.data)</code></pre>
+<pre class="r"><code>sensitivity.mnl &lt;- function(model, attrib, base.data, competitor.data) {
+  # Function for creating data for a share-sensitivity chart
+  # model: mlogit object returned by mlogit() function
+  # attrib: list of vectors with attribute levels to be used in sensitivity
+  # base.data: data frame containing baseline design of target product
+  # competitor.data: data frame contining design of competitive set
+  data &lt;- rbind(base.data, competitor.data)
+  base.share &lt;- predict.mnl(model, data)[1,1]
+  share &lt;- NULL
+  for (a in seq_along(attrib)) {
+    for (i in attrib[[a]]) {
+      data[1,] &lt;- base.data
+      data[1, a] &lt;- i
+      share &lt;- c(share, predict.mnl(model, data)[1,1])
+    }
+  }
+  data.frame(level=unlist(attrib), share=share, increase=share-base.share)
+
+}
+
+base.data &lt;- data.frame(rbind(car5))
+base.data$price &lt;- as.numeric(as.character(base.data$price))
+
+competitor.data &lt;- data.frame(rbind(car0, car1, car2, car3, car4))
+competitor.data$price &lt;- as.numeric(as.character(competitor.data$price))
+
+attrib&lt;-list(brand=c(&quot;Audi&quot;), price=levels(x$price), type=c(&quot;Berline&quot;, &quot;city_car&quot;, &quot;SUV&quot;), gear=levels(x$gear), options=levels(x$options))
+
+tradeoff &lt;- sensitivity.mnl(m1, attrib, base.data, competitor.data)
+
+barplot(tradeoff$increase, horiz=FALSE, names.arg=tradeoff$level,
+        ylab=&quot;Change in Share for Baseline Product&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>#shows how share would change if we changed each of the attributes of the design one at a time in comparison to a existing alternative (8)</code></pre>
+</div>
+<div id="random-effectheterogen-mnlogit-each-respondent-has-his-own-utility-coef" class="section level1">
+<h1>2. random effect/heterogen mnlogit: each respondent has his own utility coef</h1>
+<pre class="r"><code>m1.rpar &lt;- rep(&quot;n&quot;, length=length(m1$coef))
+names(m1.rpar) &lt;- names(m1$coef)
+m1.rpar</code></pre>
+<pre><code>##      brandBMW brandMercedes         price  typecity_car       typeSUV 
+##           &quot;n&quot;           &quot;n&quot;           &quot;n&quot;           &quot;n&quot;           &quot;n&quot; 
+##    gearmanual   optionsnone   optionssome 
+##           &quot;n&quot;           &quot;n&quot;           &quot;n&quot;</code></pre>
+<pre class="r"><code>m1.hier &lt;- mlogit(choice ~ 0 + brand + price + type + gear + options,data = car.mlogit, panel=TRUE, rpar = m1.rpar, correlation = FALSE)
+#panel=true means multiple questions per respondent
+#assume utilities are not correlated
+summary(m1.hier)</code></pre>
+<pre><code>## 
+## Call:
+## mlogit(formula = choice ~ 0 + brand + price + type + gear + options, 
+##     data = car.mlogit, rpar = m1.rpar, correlation = FALSE, panel = TRUE)
+## 
+## Frequencies of alternatives:
+##   pos 1   pos 2   pos 3 
+## 0.35000 0.34667 0.30333 
+## 
+## bfgs method
+## 20 iterations, 0h:0m:1s 
+## g&#39;(-H)^-1g = 8.87E-07 
+## gradient close to zero 
+## 
+## Coefficients :
+##                   Estimate Std. Error z-value  Pr(&gt;|z|)    
+## brandBMW         -0.141340   0.382180 -0.3698 0.7115125    
+## brandMercedes    -1.880427   0.452820 -4.1527 3.286e-05 ***
+## price            -0.074748   0.024765 -3.0183 0.0025416 ** 
+## typecity_car     -0.868706   0.341033 -2.5473 0.0108568 *  
+## typeSUV          -0.027631   0.304229 -0.0908 0.9276334    
+## gearmanual        0.142016   0.245891  0.5776 0.5635642    
+## optionsnone      -2.446326   0.446654 -5.4770 4.326e-08 ***
+## optionssome      -1.179616   0.333729 -3.5347 0.0004083 ***
+## sd.brandBMW       3.343293   0.605362  5.5228 3.336e-08 ***
+## sd.brandMercedes -1.907095   0.659529 -2.8916 0.0038329 ** 
+## sd.price          0.157275   0.045671  3.4436 0.0005740 ***
+## sd.typecity_car   1.141074   0.594474  1.9195 0.0549249 .  
+## sd.typeSUV       -0.458245   0.440335 -1.0407 0.2980268    
+## sd.gearmanual    -0.453472   0.570572 -0.7948 0.4267492    
+## sd.optionsnone    0.964380   0.453196  2.1280 0.0333407 *  
+## sd.optionssome    0.598770   0.451827  1.3252 0.1850987    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Log-Likelihood: -240.07
+## 
+## random coefficients
+##               Min.    1st Qu.      Median        Mean     3rd Qu. Max.
+## brandBMW      -Inf -2.3963567 -0.14133975 -0.14133975  2.11367718  Inf
+## brandMercedes -Inf -3.1667432 -1.88042742 -1.88042742 -0.59411165  Inf
+## price         -Inf -0.1808282 -0.07474815 -0.07474815  0.03133193  Inf
+## typecity_car  -Inf -1.6383485 -0.86870576 -0.86870576 -0.09906300  Inf
+## typeSUV       -Inf -0.3367123 -0.02763088 -0.02763088  0.28145052  Inf
+## gearmanual    -Inf -0.1638463  0.14201573  0.14201573  0.44787773  Inf
+## optionsnone   -Inf -3.0967904 -2.44632565 -2.44632565 -1.79586093  Inf
+## optionssome   -Inf -1.5834804 -1.17961631 -1.17961631 -0.77575218  Inf</code></pre>
+<pre class="r"><code>stdev(m1.hier)</code></pre>
+<pre><code>##      brandBMW brandMercedes         price  typecity_car       typeSUV 
+##     3.3432931     1.9070946     0.1572746     1.1410741     0.4582448 
+##    gearmanual   optionsnone   optionssome 
+##     0.4534717     0.9643804     0.5987698</code></pre>
+<pre class="r"><code># a lot of spread for the 8 seat choice: people prefer 6 but there are also a bunch of people going for 8
+
+m2.hier &lt;- update(m1.hier, correlation = TRUE)
+summary(m2.hier)</code></pre>
+<pre><code>## 
+## Call:
+## mlogit(formula = choice ~ 0 + brand + price + type + gear + options, 
+##     data = car.mlogit, rpar = m1.rpar, correlation = TRUE, panel = TRUE)
+## 
+## Frequencies of alternatives:
+##   pos 1   pos 2   pos 3 
+## 0.35000 0.34667 0.30333 
+## 
+## bfgs method
+## 73 iterations, 0h:0m:4s 
+## g&#39;(-H)^-1g = 8.45E-07 
+## gradient close to zero 
+## 
+## Coefficients :
+##                                    Estimate Std. Error z-value Pr(&gt;|z|)   
+## brandBMW                          -4.771956   2.181775 -2.1872 0.028729 * 
+## brandMercedes                     -7.673303   2.547115 -3.0125 0.002591 **
+## price                             -0.476457   0.184392 -2.5839 0.009768 **
+## typecity_car                      -4.191112   1.430913 -2.9290 0.003401 **
+## typeSUV                            0.866159   1.349875  0.6417 0.521095   
+## gearmanual                        -0.756965   1.044386 -0.7248 0.468579   
+## optionsnone                      -10.187881   3.725127 -2.7349 0.006240 **
+## optionssome                       -5.684459   2.146532 -2.6482 0.008092 **
+## chol.brandBMW:brandBMW            13.907362   4.450911  3.1246 0.001780 **
+## chol.brandBMW:brandMercedes        6.213414   2.125980  2.9226 0.003471 **
+## chol.brandMercedes:brandMercedes   2.355313   1.048088  2.2472 0.024624 * 
+## chol.brandBMW:price                0.261955   0.161036  1.6267 0.103803   
+## chol.brandMercedes:price           0.411769   0.205912  1.9997 0.045529 * 
+## chol.price:price                   0.765031   0.289769  2.6401 0.008287 **
+## chol.brandBMW:typecity_car         2.507974   1.415890  1.7713 0.076510 . 
+## chol.brandMercedes:typecity_car    3.709622   1.351538  2.7447 0.006056 **
+## chol.price:typecity_car            0.327405   1.161460  0.2819 0.778027   
+## chol.typecity_car:typecity_car     1.497134   1.171243  1.2782 0.201163   
+## chol.brandBMW:typeSUV             -1.425859   1.402788 -1.0164 0.309417   
+## chol.brandMercedes:typeSUV        -0.567335   0.908349 -0.6246 0.532248   
+## chol.price:typeSUV                -3.184738   1.488060 -2.1402 0.032339 * 
+## chol.typecity_car:typeSUV          6.072453   2.366389  2.5661 0.010284 * 
+## chol.typeSUV:typeSUV               4.009631   1.675815  2.3926 0.016727 * 
+## chol.brandBMW:gearmanual           4.402714   1.896335  2.3217 0.020249 * 
+## chol.brandMercedes:gearmanual      0.518036   1.014872  0.5104 0.609740   
+## chol.price:gearmanual             -3.581171   1.817547 -1.9703 0.048800 * 
+## chol.typecity_car:gearmanual       2.520850   1.090609  2.3114 0.020810 * 
+## chol.typeSUV:gearmanual           -2.791864   1.157630 -2.4117 0.015878 * 
+## chol.gearmanual:gearmanual         0.023732   0.641781  0.0370 0.970502   
+## chol.brandBMW:optionsnone          3.005690   2.117791  1.4193 0.155824   
+## chol.brandMercedes:optionsnone     8.852976   3.476601  2.5464 0.010883 * 
+## chol.price:optionsnone             1.513542   1.712067  0.8840 0.376672   
+## chol.typecity_car:optionsnone     -1.202248   1.299263 -0.9253 0.354794   
+## chol.typeSUV:optionsnone          -4.029339   1.913599 -2.1056 0.035236 * 
+## chol.gearmanual:optionsnone        2.555794   1.476087  1.7315 0.083369 . 
+## chol.optionsnone:optionsnone       4.459679   1.875855  2.3774 0.017435 * 
+## chol.brandBMW:optionssome         -0.196785   1.330955 -0.1479 0.882459   
+## chol.brandMercedes:optionssome     4.860703   1.679803  2.8936 0.003808 **
+## chol.price:optionssome            -1.663560   1.054357 -1.5778 0.114613   
+## chol.typecity_car:optionssome     -1.122516   1.004996 -1.1169 0.264022   
+## chol.typeSUV:optionssome           2.693248   1.655914  1.6264 0.103856   
+## chol.gearmanual:optionssome        0.894194   1.087475  0.8223 0.410925   
+## chol.optionsnone:optionssome      -0.304800   0.855937 -0.3561 0.721765   
+## chol.optionssome:optionssome       3.749933   1.822941  2.0571 0.039679 * 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Log-Likelihood: -201.15
+## 
+## random coefficients
+##               Min.    1st Qu.      Median        Mean    3rd Qu. Max.
+## brandBMW      -Inf -14.152329  -4.7719556  -4.7719556  4.6084173  Inf
+## brandMercedes -Inf -12.155185  -7.6733027  -7.6733027 -3.1914201  Inf
+## price         -Inf  -1.088516  -0.4764575  -0.4764575  0.1356009  Inf
+## typecity_car  -Inf  -7.383369  -4.1911123  -4.1911123 -0.9988560  Inf
+## typeSUV       -Inf  -4.590514   0.8661588   0.8661588  6.3228317  Inf
+## gearmanual    -Inf  -5.362638  -0.7569647  -0.7569647  3.8487082  Inf
+## optionsnone   -Inf -17.989892 -10.1878809 -10.1878809 -2.3858693  Inf
+## optionssome   -Inf -10.449083  -5.6844591  -5.6844591 -0.9198347  Inf</code></pre>
+<pre class="r"><code>cov2cor(cov.mlogit(m2.hier))</code></pre>
+<pre><code>##                  brandBMW brandMercedes      price typecity_car
+## brandBMW       1.00000000     0.9350723  0.2886751   0.52990826
+## brandMercedes  0.93507232     1.0000000  0.4307740   0.77332719
+## price          0.28867505     0.4307740  1.0000000   0.56695891
+## typecity_car   0.52990826     0.7733272  0.5669589   1.00000000
+## typeSUV       -0.17624789    -0.1896616 -0.4145810   0.06184429
+## gearmanual     0.64476688     0.6297946 -0.2215955   0.48163010
+## optionsnone    0.25984416     0.5142555  0.5326143   0.71374878
+## optionssome   -0.02785729     0.2178500  0.1056541   0.45800887
+##                   typeSUV  gearmanual optionsnone optionssome
+## brandBMW      -0.17624789  0.64476688   0.2598442 -0.02785729
+## brandMercedes -0.18966162  0.62979458   0.5142555  0.21785004
+## price         -0.41458103 -0.22159553   0.5326143  0.10565412
+## typecity_car   0.06184429  0.48163010   0.7137488  0.45800887
+## typeSUV        1.00000000  0.16195868  -0.4016373  0.11904830
+## gearmanual     0.16195868  1.00000000   0.2617994 -0.05635901
+## optionsnone   -0.40163728  0.26179940   1.0000000  0.38361609
+## optionssome    0.11904830 -0.05635901   0.3836161  1.00000000</code></pre>
+<pre class="r"><code>#correlation between levels of seating: normal the respondent thinks it is an important factor when increasing/decreasing
+
+# Simulating shares
+predict.hier.mnl &lt;- function(model, data, nresp=1000) {
+  # Function for predicting shares from a hierarchical multinomial logit model 
+  # model: mlogit object returned by mlogit()
+  # data: a data frame containing the set of designs for which you want to 
+  #       predict shares.  Same format at the data used to estimate model. 
+  # Note that this code assumes all model parameters are random
+  data.model &lt;- model.matrix(update(model$formula, 0 ~ .), data = data)[,-1]
+  coef.Sigma &lt;- cov.mlogit(model)
+  coef.mu &lt;- model$coef[1:dim(coef.Sigma)[1]]
+  draws &lt;- mvrnorm(n=nresp, coef.mu, coef.Sigma)
+  shares &lt;- matrix(NA, nrow=nresp, ncol=nrow(data))
+  for (i in 1:nresp) {
+    utility &lt;- data.model%*%draws[i,]
+    share = exp(utility)/sum(exp(utility))
+    shares[i,] &lt;- share
+  }
+  cbind(colMeans(shares), data)
+}
+
+predict.hier.mnl(m2.hier, data=cars)</code></pre>
+<pre><code>##      colMeans(shares)    brand price     type   gear options
+## car0       0.37220162      BMW    15 city_car manual     all
+## car1       0.07487189      BMW    20      SUV   auto    some
+## car2       0.01869100 Mercedes    15 city_car manual    some
+## car3       0.07776132 Mercedes    20  Berline   auto    none
+## car4       0.08185875     Audi    25  Berline manual    some
+## car5       0.37461543     Audi    25      SUV   auto    some</code></pre>
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ3VzdG9tZXIgSW50ZWxsaWdlbmNlIgphdXRob3I6ICdbTGVvbmFyZCBIZW5yaXF1ZXpdKGh0dHBzOi8vZ2l0aHViLmNvbS9sZW9uYXJkLWhlbnJpcXVlei8pLCBbQWRyaWVuIExlcXVpbGxlcl0oaHR0cHM6Ly9naXRodWIuY29tL2FkcmllbmxlcXVpbGxlcikgJiBbRWRkeSBPaGF5b25dKGh0dHBzOi8vZ2l0aHViLmNvbS9FZGRvaGE1NSknCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCIKb3V0cHV0OiBodG1sX2RvY3VtZW50CmFsd2F5c19hbGxvd19odG1sOiB5ZXMKLS0tCgojIERhdGEgcHJlcGFyYXRpb24KCmBgYHtyIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0UsIGluY2x1ZGU9RkFMU0V9CiMgT3B0aW9ucwprbml0cjo6b3B0c19jaHVuayRzZXQoY2FjaGUgPSBUUlVFLCB3YXJuaW5nPUZBTFNFKQpgYGAKClJlYWQgaW4gdGhlIGRhdGEKCmBgYHtyfQojIGFsbCBhbHRlcm5hdGl2ZXMKeDwtcmVhZC5jc3YoImlucHV0LzE5MDE5NzAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfWC5jc3YiKQojeCRQcmljZTwtYXMuZmFjdG9yKGFzLmNoYXJhY3Rlcih4JFByaWNlKSkKIyBjaG9pY2UgcGVyIGRpc3BsYXkgZ3JvdXAKeTwtcmVhZC5jc3YoImlucHV0LzE5MDE5NzAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfeS5jc3YiKQojIGRlbW9ncmFwaGljIGluZm9ybWF0aW9uCno8LXJlYWQuY3N2KCJpbnB1dC8xOTAxOTcwMDAwMV9jb25qb2ludF9jaG9pY2VfZGF0X1ouY3N2IikKYGBgCgpUcmFuc2Zvcm0gdGhlIGRhdGEgaW50byBsb25nIGZvcm1hdAoKYGBge3J9CmNob2ljZXNwZXJxdWVzdGlvbnM8LTMKCnlbMSwyXQpmb3IgKGkgaW4gMTpucm93KHkpKQp7CiAgeVtpLDJdPShpLTEpKmNob2ljZXNwZXJxdWVzdGlvbnMreVtpLDJdCn0KCngkcmVzcG9uc2U8LTAKZm9yIChpIGluIDE6bnJvdyh5KSkKewogIGo9eVtpLDJdCiAgeFtqLDhdPC0xCn0KCngkUHJvZmlsZTwtTlVMTAphbHRlcm5hdGl2ZTwtMQpxdWVzdGlvbmNvdW50ZXI8LTEKeCRxdWVzPC0wCngkYWx0PC0wCmxhc3RpZDwteFsxLDFdCmZvciAoaSBpbiAxOm5yb3coeCkpCnsKICBpZih4W2ksMV0hPWxhc3RpZCkKICB7CiAgICBsYXN0aWQ9eFtpLDFdCiAgICBxdWVzdGlvbmNvdW50ZXI8LTAKICB9CiAgaWYoYWx0ZXJuYXRpdmU8PWNob2ljZXNwZXJxdWVzdGlvbnMpCiAgewogICAgeFtpLDhdPC1xdWVzdGlvbmNvdW50ZXIKICAgIHhbaSw5XTwtYWx0ZXJuYXRpdmUKICAgIGFsdGVybmF0aXZlPC1hbHRlcm5hdGl2ZSsxCiAgfQogIGVsc2UKICB7CiAgICBxdWVzdGlvbmNvdW50ZXI8LXF1ZXN0aW9uY291bnRlcisxCiAgICBhbHRlcm5hdGl2ZTwtMQogICAgeFtpLDhdPC1xdWVzdGlvbmNvdW50ZXIKICAgIHhbaSw5XTwtYWx0ZXJuYXRpdmUKICAgIGFsdGVybmF0aXZlPC1hbHRlcm5hdGl2ZSsxCiAgfQp9CgojIG1lcmdlIGEgdmFsaWQgY292YXJpYXRlIGhlcmU6IGluIG15IGNhc2Ugc2V4IG9yIFExLgp4PC1tZXJnZSh4LHosYnk9IklEIixhbGwueD1UUlVFKQpjb2xuYW1lcyh4KVsxMF0gPC0gInNleCIKY29sbmFtZXMoeClbMTFdIDwtICJwZXJjZXB0aW9uIgp4JFEyLjwtTlVMTApzdW1tYXJ5KHgpCmBgYAoKT3VyIGRhdGEgeCBpcyBub3cgaW4gdGhlIGxvbmcgZm9ybWF0IHNvIHlvdSBjYW4gbGF1bmNoIHRoZSBmaXJzdCB0d28gc29sdXRpb24gbWV0aG9kcwoKIyBBbmFseXNpcwoKVXNlIHVuZGVyc3RhbmRpbmcgY29kZSB0byBtYWtlIGl0IHJlYWR5IGZvciB0aGUgdGhpcmQgbWV0aG9kIChIaWVyYXJjaGljYWwgQmF5ZXMgbXVsdGlub21pYWwgbG9naXQpCgpgYGB7cn0KY2hvaWNlIDwtIHJlcCgwLCBucm93KHgpKQpjaG9pY2VbeFssInJlc3BvbnNlIl09PTFdIDwtIHhbeFssInJlc3BvbnNlIl09PTEsImFsdCJdCmBgYAoKSW5kaWNhdGUgd2hpY2ggb3V0IG9mIHRoZSAzIGFsdGVybmF0aXZlcyBwZXIgcXVlc3Rpb24gaXMgY2hvc2VuCgpgYGB7cn0KaGVhZChjaG9pY2UpCmBgYAoKQ29udmVydCB0aGUgZmFjdG9yIGxldmVscyB0byBkdW1taWVzOiBjaGFuZ2UgdGhlIG5hbWUgb2YgZmFjdG9yIHRvIHlvdXIgZmFjdG9yIG5hbWVzCgpgYGB7cn0KeC5jb2RlZCA8LSBtb2RlbC5tYXRyaXgofiBCcmFuZCArIFByaWNlICsgVHlwZSArIEdlYXIgKyBPcHRpb25zLCBkYXRhID0geCkgIyBjaGFuZ2UgdGhpcyB0byB5b3VyIG93biBmYWN0b3JzCnguY29kZWQgPC0geC5jb2RlZFssIC0xXSAjIHJlbW92ZSB0aGUgaW50ZXJjZXB0CmBgYAoKQ29tYmluZSBldmVyeXRoaW5nIGJhY2sgaW50byBhIGRmCgpgYGB7cn0KY2hvaWNlbW9kZWxyLmRhdGEgPC0gY2JpbmQoeFssIDE6M10sIHguY29kZWQsIGNob2ljZSkKaGVhZChjaG9pY2Vtb2RlbHIuZGF0YSkKYGBgCgpDb3ZhcmlhdGU6IGNoYW5nZSBzZXggaW50byB0aGUgbmFtZSBvZiB5b3VyIGNvdmFyaWF0ZQoKYGBge3J9CnNleCA8LSB4JHNleFt4JHF1ZXM9PTEgJiB4JGFsdD09MV09PSJNYWxlICIjIGZvciBlYWNoIHJlc3BvbmRlbnQKc2V4IDwtIGFzLm51bWVyaWMoc2V4KQpkZW1vcyA8LSBhcy5tYXRyaXgoc2V4LCBucm93PWxlbmd0aChzZXgpKQpgYGAK</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ3VzdG9tZXIgSW50ZWxsaWdlbmNlIgphdXRob3I6ICdbTGVvbmFyZCBIZW5yaXF1ZXpdKGh0dHBzOi8vZ2l0aHViLmNvbS9sZW9uYXJkLWhlbnJpcXVlei8pLCBbQWRyaWVuIExlcXVpbGxlcl0oaHR0cHM6Ly9naXRodWIuY29tL2FkcmllbmxlcXVpbGxlcikgJiBbRWRkeSBPaGF5b25dKGh0dHBzOi8vZ2l0aHViLmNvbS9FZGRvaGE1NSknCmRhdGU6ICJgciBTeXMuRGF0ZSgpYCIKb3V0cHV0OiBodG1sX2RvY3VtZW50CmFsd2F5c19hbGxvd19odG1sOiB5ZXMKLS0tCgojIERhdGEgcHJlcGFyYXRpb24KCmBgYHtyIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0UsIGluY2x1ZGU9RkFMU0V9CiMgT3B0aW9ucwprbml0cjo6b3B0c19jaHVuayRzZXQoY2FjaGUgPSBUUlVFLCB3YXJuaW5nPUZBTFNFKQpsaWJyYXJ5KG1sb2dpdCkKbGlicmFyeShNQVNTKQpgYGAKClJlYWQgaW4gdGhlIGRhdGEKCmBgYHtyfQojIGFsbCBhbHRlcm5hdGl2ZXMKeDwtcmVhZC5jc3YoImlucHV0LzE5MDE5NzAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfWC5jc3YiKQoKIyBjaG9pY2UgcGVyIGRpc3BsYXkgZ3JvdXAKeTwtcmVhZC5jc3YoImlucHV0LzE5MDE5NzAwMDAxX2NvbmpvaW50X2Nob2ljZV9kYXRfeS5jc3YiKQoKIyBkZW1vZ3JhcGhpYyBpbmZvcm1hdGlvbgp6PC1yZWFkLmNzdigiaW5wdXQvMTkwMTk3MDAwMDFfY29uam9pbnRfY2hvaWNlX2RhdF9aLmNzdiIpCmNvbG5hbWVzKHopWzI6NF0gPC0gYygic2V4IiwgImFnZSIsICJwZXJjZXB0aW9uIikKYGBgCgpUcmFuc2Zvcm0gdGhlIGRhdGEgaW50byBsb25nIGZvcm1hdAoKYGBge3J9CmNob2ljZXNwZXJxdWVzdGlvbnM8LTMKCmZvciAoaSBpbiAxOm5yb3coeSkpCnsKICB5W2ksInkiXT0oaS0xKSpjaG9pY2VzcGVycXVlc3Rpb25zK3lbaSwieSJdCn0KCngkY2hvaWNlPC0wCmZvciAoaSBpbiAxOm5yb3coeSkpCnsKICBqPXlbaSwieSJdCiAgeFtqLCJjaG9pY2UiXTwtMQp9Cgp4JFByb2ZpbGU8LU5VTEwKYWx0ZXJuYXRpdmU8LTEKcXVlc3Rpb25jb3VudGVyPC0xCngkcXVlczwtMAp4JGFsdDwtMApsYXN0aWQ8LXhbMSwxXQpmb3IgKGkgaW4gMTpucm93KHgpKQp7CiAgaWYoeFtpLDFdIT1sYXN0aWQpCiAgewogICAgbGFzdGlkPXhbaSwxXQogICAgcXVlc3Rpb25jb3VudGVyPC0wCiAgfQogIGlmKGFsdGVybmF0aXZlPD1jaG9pY2VzcGVycXVlc3Rpb25zKQogIHsKICAgIHhbaSwicXVlcyJdPC1xdWVzdGlvbmNvdW50ZXIKICAgIHhbaSwiYWx0Il08LWFsdGVybmF0aXZlCiAgICBhbHRlcm5hdGl2ZTwtYWx0ZXJuYXRpdmUrMQogIH0KICBlbHNlCiAgewogICAgcXVlc3Rpb25jb3VudGVyPC1xdWVzdGlvbmNvdW50ZXIrMQogICAgYWx0ZXJuYXRpdmU8LTEKICAgIHhbaSwicXVlcyJdPC1xdWVzdGlvbmNvdW50ZXIKICAgIHhbaSwiYWx0Il08LWFsdGVybmF0aXZlCiAgICBhbHRlcm5hdGl2ZTwtYWx0ZXJuYXRpdmUrMQogIH0KfQp4WywiY2hvaWNlIl0gPC0geFssImNob2ljZSJdID09IDEKCiMgbWVyZ2UgYSB2YWxpZCBjb3ZhcmlhdGUgaGVyZTogaW4gbXkgY2FzZSBzZXgsIGFnZSwgcGVyY2VwdGlvbi4KeDwtbWVyZ2UoeCx6LGJ5PSJJRCIsYWxsLng9VFJVRSkKc3VtbWFyeSh4KQpgYGAKCk91ciBkYXRhIHggaXMgbm93IGluIHRoZSBsb25nIGZvcm1hdCBzbyB5b3UgY2FuIGxhdW5jaCB0aGUgZmlyc3QgdHdvIHNvbHV0aW9uIG1ldGhvZHMKCiMgQW5hbHlzaXMKCkxldCdzIGV4cGxvcmUgdGhlIGRhdGEgdG8gc2VlIHRoZSBjaG9pY2VzIGZvciBlYWNoIHBvc3NpYmxlIGFsdGVybmF0aXZlCmBgYHtyfQojIFByaWNlCnh0YWJzKGNob2ljZX5wcmljZSxkYXRhPXgpCgojIEJyYW5kCnh0YWJzKGNob2ljZX5icmFuZCxkYXRhPXgpCgojIFR5cGUKeHRhYnMoY2hvaWNlfnR5cGUsZGF0YT14KQoKIyBHZWFyCnh0YWJzKGNob2ljZX5nZWFyLGRhdGE9eCkKCiMgT3B0aW9ucwp4dGFicyhjaG9pY2V+b3B0aW9ucyxkYXRhPXgpCmBgYAoKCkNyZWF0aW9uIGQndW4gbW9kZWwgbXVsdGlub21pYWwKCmBgYHtyfQpjYXIubWxvZ2l0IDwtIG1sb2dpdC5kYXRhKGRhdGE9eCwgY2hvaWNlPSJjaG9pY2UiLCBzaGFwZT0ibG9uZyIsIGFsdC5sZXZlbHM9cGFzdGUoInBvcyIsMTozKSwgaWQudmFyPSJJRCIpCm0xPC1tbG9naXQoY2hvaWNlIH4gMCArIGJyYW5kICsgcHJpY2UgKyB0eXBlICsgZ2VhciArIG9wdGlvbnMsIGRhdGE9Y2FyLm1sb2dpdCkKc3VtbWFyeShtMSkKYGBgCgpBbmFseXNlOgotIExlIHR5cGUgZGUgdHJhbnNtaXNzaW9uIG4nYSBwYXMgZCdpbXBhY3Qgc2lnbmlmaWNhdGlmIHN1ciBsZSBjaG9peCBkJ3VuZSB2b2l0dXJlCi0gTWFycXVlOiBwYXMgZGUgZGlmZsOpcmVuY2Ugc2lnbmlmaWNhdGl2ZSBlbnRyZSBBdWRpIGV0IEJNVywgbWFpcyBwYXIgY29udHJlIGxhICJ3aWxsaW5nbmVzcyB0byBwYXkiIiBkJ3VuIGNsaWVudCBwb3VyIHVuZSBNZXJjZWRlcyBlc3QgcGx1cyBmYWlibGUgZGUgMjY1NzcuOTkgZXVyb3MgKGZhaXJlIGFwcGFyYWl0cmUgbGUgY2FsY3VsIGNvZWYobTEpWyJicmFuZE1lcmNlZGVzIl0vY29lZihtMSlbInByaWNlIl0gKSBldCBwcsOpY2lzZXIgcXVlY2UgY2hpZmZyZSByZWZsw6h0ZSBjZXJ0YWluZW1lbnQgdW4gYmlhaXMgZCfDqWNoYW50aWxsb24KLSBQcmljZTogbGUgcHJpeCBhIHVuIGltcGFjdCBzaWduaWZpY2F0aWYgc3VyIGxlIGNob2l4Ci0gVHlwZTogcGFzIGQnaW1wYWN0IHF1ZSDDp2Egc29pdCB1bmUgYmVybGluZSBvdSB1biBTVVYsIHBhciBjb250cmUgdW5lIGNpdHlfY2FyIGJhaXNzZSBsYSB3aWxsaW5nbmVzcyB0byBwYXkgZGUgODYxMy4zMjUgZXVyb3MgKGNvZWYobTEpWyJ0eXBlY2l0eV9jYXIiXS9jb2VmKG0xKVsicHJpY2UiXSkKLSBPcHRpb25zOiBhIHVuIGltcGFjdCBzaWduaWZpY2F0aWYKCgpNYWludGVuYW50IGVzc2F5b25zIGRlIHByw6l2b2lyIGxlcyBwYXJ0IGRlIG1hcmNow6kgZGUgQk1XLCBBdWRpIGV0IE1lcmNlZGVzIGVuIGZvbmN0aW9uIGRlcyBjYXJhY3TDqXJpc3RpcXVlcyBkZSBsZXVycyB2b2l0dXJlcwoKYGBge3J9CnByZWRpY3QubW5sIDwtIGZ1bmN0aW9uKG1vZGVsLCBkYXRhKSB7CiAgIyBGdW5jdGlvbiBmb3IgcHJlZGljdGluZyBzaGFyZXMgZnJvbSBhIG11bHRpbm9taWFsIGxvZ2l0IG1vZGVsCiAgIyBtb2RlbDogbWxvZ2l0IG9iamVjdCByZXR1cm5lZCBieSBtbG9naXQoKQogICMgZGF0YTogYSBkYXRhIGZyYW1lIGNvbnRhaW5pbmcgdGhlIHNldCBvZiBkZXNpZ25zIGZvciB3aGljaCB5b3Ugd2FudCB0bwogICMgcHJlZGljdCBzaGFyZXMuIFNhbWUgZm9ybWF0IGFzIHRoZSBkYXRhIHVzZWQgdG8gZXN0aW1hdGUgbW9kZWwuCiAgZGF0YS5tb2RlbCA8LSBtb2RlbC5tYXRyaXgodXBkYXRlKG1vZGVsJGZvcm11bGEsIDAgfiAuKSwgZGF0YSA9IGRhdGEpWywtMV0KICB1dGlsaXR5IDwtIGRhdGEubW9kZWwgJSolIG1vZGVsJGNvZWYjbWFyaXggbXVsdGlwbGljYXRpb24KICBzaGFyZSA8LSBleHAodXRpbGl0eSkvc3VtKGV4cCh1dGlsaXR5KSkjY29udmVydCBzZXQgYmFjayB0byBwcm9iCiAgY2JpbmQoc2hhcmUsIGRhdGEpCn0KCmNhcjAgPC0gYyhicmFuZD0iQk1XIiwgcHJpY2U9MTUsIHR5cGU9ImNpdHlfY2FyIiwgZ2Vhcj0ibWFudWFsIiwgb3B0aW9ucz0iYWxsIikKY2FyMSA8LSBjKGJyYW5kPSJCTVciLCBwcmljZT0yMCwgdHlwZT0iU1VWIiwgZ2Vhcj0iYXV0byIsIG9wdGlvbnM9InNvbWUiKQpjYXIyIDwtIGMoYnJhbmQ9Ik1lcmNlZGVzIiwgcHJpY2U9MTUsIHR5cGU9ImNpdHlfY2FyIiwgIGdlYXI9Im1hbnVhbCIsIG9wdGlvbnM9InNvbWUiKQpjYXIzIDwtIGMoYnJhbmQ9Ik1lcmNlZGVzIiwgcHJpY2U9MjAsIHR5cGU9IkJlcmxpbmUiLCAgZ2Vhcj0iYXV0byIsIG9wdGlvbnM9Im5vbmUiKQpjYXI0IDwtIGMoYnJhbmQ9IkF1ZGkiLCBwcmljZT0yNSwgdHlwZT0iQmVybGluZSIsICBnZWFyPSJtYW51YWwiLCBvcHRpb25zPSJzb21lIikKY2FyNSA8LSBjKGJyYW5kPSJBdWRpIiwgcHJpY2U9MjUsIHR5cGU9IlNVViIsICBnZWFyPSJhdXRvIiwgb3B0aW9ucz0ic29tZSIpCmNhcnMgPC0gZGF0YS5mcmFtZShyYmluZChjYXIwLCBjYXIxLCBjYXIyLCBjYXIzLCBjYXI0LCBjYXI1KSkKY2FycyRwcmljZSA8LSBhcy5udW1lcmljKGFzLmNoYXJhY3RlcihjYXJzJHByaWNlKSkKCnByZWRpY3QubW5sKG0xLCBjYXJzKQoKIyBjcmVhdGUgYSBncmlkIHdpdGggYWxsIHBvc3NpYmxlIGRlc2lnbiBhbmQgc2VsZWN0IHRoZSBvbmVzIHdlIGFyZSBpbnRlcmVzdGVkIGluIChpbiBnZW5lcmFsIHRoZSBvbmVzIHlvdXIgY29tcGFueSBpcyBvZmZlcmluZykKI2F0dHJpYjwtbGlzdChzZWF0PWMoIjYiLCI3IiwiOCIpLGNhcmdvPWMoIjJmdCIsIjNmdCIpLGVuZz1jKCJnYXMiLCJoeWIiLCJlbGVjIikscHJpY2U9YygiMzAiLCIzNSIsIjQwIikpCiN0b3RhbCBhbW91bnQgb2YgY29tYmluYXRpb25zOiAzKjIqMyozPTU0CiMobmV3LmRhdGE8LWV4cGFuZC5ncmlkKGF0dHJpYilbYyg4LDEsMyw0MSw0OSwyNiksXSkjcmFuZG9tbHkgcGljayBhIGZldyBjb21ib3MgYXMgInJlYWwiIG1hcmtldCBvcHRpb25zCiNwcmVkaWN0Lm1ubChtMyxuZXcuZGF0YSkKYGBgCgpgYGB7cn0Kc2Vuc2l0aXZpdHkubW5sIDwtIGZ1bmN0aW9uKG1vZGVsLCBhdHRyaWIsIGJhc2UuZGF0YSwgY29tcGV0aXRvci5kYXRhKSB7CiAgIyBGdW5jdGlvbiBmb3IgY3JlYXRpbmcgZGF0YSBmb3IgYSBzaGFyZS1zZW5zaXRpdml0eSBjaGFydAogICMgbW9kZWw6IG1sb2dpdCBvYmplY3QgcmV0dXJuZWQgYnkgbWxvZ2l0KCkgZnVuY3Rpb24KICAjIGF0dHJpYjogbGlzdCBvZiB2ZWN0b3JzIHdpdGggYXR0cmlidXRlIGxldmVscyB0byBiZSB1c2VkIGluIHNlbnNpdGl2aXR5CiAgIyBiYXNlLmRhdGE6IGRhdGEgZnJhbWUgY29udGFpbmluZyBiYXNlbGluZSBkZXNpZ24gb2YgdGFyZ2V0IHByb2R1Y3QKICAjIGNvbXBldGl0b3IuZGF0YTogZGF0YSBmcmFtZSBjb250aW5pbmcgZGVzaWduIG9mIGNvbXBldGl0aXZlIHNldAogIGRhdGEgPC0gcmJpbmQoYmFzZS5kYXRhLCBjb21wZXRpdG9yLmRhdGEpCiAgYmFzZS5zaGFyZSA8LSBwcmVkaWN0Lm1ubChtb2RlbCwgZGF0YSlbMSwxXQogIHNoYXJlIDwtIE5VTEwKICBmb3IgKGEgaW4gc2VxX2Fsb25nKGF0dHJpYikpIHsKICAgIGZvciAoaSBpbiBhdHRyaWJbW2FdXSkgewogICAgICBkYXRhWzEsXSA8LSBiYXNlLmRhdGEKICAgICAgZGF0YVsxLCBhXSA8LSBpCiAgICAgIHNoYXJlIDwtIGMoc2hhcmUsIHByZWRpY3QubW5sKG1vZGVsLCBkYXRhKVsxLDFdKQogICAgfQogIH0KICBkYXRhLmZyYW1lKGxldmVsPXVubGlzdChhdHRyaWIpLCBzaGFyZT1zaGFyZSwgaW5jcmVhc2U9c2hhcmUtYmFzZS5zaGFyZSkKCn0KCmJhc2UuZGF0YSA8LSBkYXRhLmZyYW1lKHJiaW5kKGNhcjUpKQpiYXNlLmRhdGEkcHJpY2UgPC0gYXMubnVtZXJpYyhhcy5jaGFyYWN0ZXIoYmFzZS5kYXRhJHByaWNlKSkKCmNvbXBldGl0b3IuZGF0YSA8LSBkYXRhLmZyYW1lKHJiaW5kKGNhcjAsIGNhcjEsIGNhcjIsIGNhcjMsIGNhcjQpKQpjb21wZXRpdG9yLmRhdGEkcHJpY2UgPC0gYXMubnVtZXJpYyhhcy5jaGFyYWN0ZXIoY29tcGV0aXRvci5kYXRhJHByaWNlKSkKCmF0dHJpYjwtbGlzdChicmFuZD1jKCJBdWRpIiksIHByaWNlPWxldmVscyh4JHByaWNlKSwgdHlwZT1jKCJCZXJsaW5lIiwgImNpdHlfY2FyIiwgIlNVViIpLCBnZWFyPWxldmVscyh4JGdlYXIpLCBvcHRpb25zPWxldmVscyh4JG9wdGlvbnMpKQoKdHJhZGVvZmYgPC0gc2Vuc2l0aXZpdHkubW5sKG0xLCBhdHRyaWIsIGJhc2UuZGF0YSwgY29tcGV0aXRvci5kYXRhKQoKYmFycGxvdCh0cmFkZW9mZiRpbmNyZWFzZSwgaG9yaXo9RkFMU0UsIG5hbWVzLmFyZz10cmFkZW9mZiRsZXZlbCwKICAgICAgICB5bGFiPSJDaGFuZ2UgaW4gU2hhcmUgZm9yIEJhc2VsaW5lIFByb2R1Y3QiKQojc2hvd3MgaG93IHNoYXJlIHdvdWxkIGNoYW5nZSBpZiB3ZSBjaGFuZ2VkIGVhY2ggb2YgdGhlIGF0dHJpYnV0ZXMgb2YgdGhlIGRlc2lnbiBvbmUgYXQgYSB0aW1lIGluIGNvbXBhcmlzb24gdG8gYSBleGlzdGluZyBhbHRlcm5hdGl2ZSAoOCkKYGBgCgoKCgojMi4gcmFuZG9tIGVmZmVjdC9oZXRlcm9nZW4gbW5sb2dpdDogZWFjaCByZXNwb25kZW50IGhhcyBoaXMgb3duIHV0aWxpdHkgY29lZgoKYGBge3J9Cm0xLnJwYXIgPC0gcmVwKCJuIiwgbGVuZ3RoPWxlbmd0aChtMSRjb2VmKSkKbmFtZXMobTEucnBhcikgPC0gbmFtZXMobTEkY29lZikKbTEucnBhcgptMS5oaWVyIDwtIG1sb2dpdChjaG9pY2UgfiAwICsgYnJhbmQgKyBwcmljZSArIHR5cGUgKyBnZWFyICsgb3B0aW9ucyxkYXRhID0gY2FyLm1sb2dpdCwgcGFuZWw9VFJVRSwgcnBhciA9IG0xLnJwYXIsIGNvcnJlbGF0aW9uID0gRkFMU0UpCiNwYW5lbD10cnVlIG1lYW5zIG11bHRpcGxlIHF1ZXN0aW9ucyBwZXIgcmVzcG9uZGVudAojYXNzdW1lIHV0aWxpdGllcyBhcmUgbm90IGNvcnJlbGF0ZWQKc3VtbWFyeShtMS5oaWVyKQpzdGRldihtMS5oaWVyKQojIGEgbG90IG9mIHNwcmVhZCBmb3IgdGhlIDggc2VhdCBjaG9pY2U6IHBlb3BsZSBwcmVmZXIgNiBidXQgdGhlcmUgYXJlIGFsc28gYSBidW5jaCBvZiBwZW9wbGUgZ29pbmcgZm9yIDgKCm0yLmhpZXIgPC0gdXBkYXRlKG0xLmhpZXIsIGNvcnJlbGF0aW9uID0gVFJVRSkKc3VtbWFyeShtMi5oaWVyKQpjb3YyY29yKGNvdi5tbG9naXQobTIuaGllcikpCiNjb3JyZWxhdGlvbiBiZXR3ZWVuIGxldmVscyBvZiBzZWF0aW5nOiBub3JtYWwgdGhlIHJlc3BvbmRlbnQgdGhpbmtzIGl0IGlzIGFuIGltcG9ydGFudCBmYWN0b3Igd2hlbiBpbmNyZWFzaW5nL2RlY3JlYXNpbmcKCiMgU2ltdWxhdGluZyBzaGFyZXMKcHJlZGljdC5oaWVyLm1ubCA8LSBmdW5jdGlvbihtb2RlbCwgZGF0YSwgbnJlc3A9MTAwMCkgewogICMgRnVuY3Rpb24gZm9yIHByZWRpY3Rpbmcgc2hhcmVzIGZyb20gYSBoaWVyYXJjaGljYWwgbXVsdGlub21pYWwgbG9naXQgbW9kZWwgCiAgIyBtb2RlbDogbWxvZ2l0IG9iamVjdCByZXR1cm5lZCBieSBtbG9naXQoKQogICMgZGF0YTogYSBkYXRhIGZyYW1lIGNvbnRhaW5pbmcgdGhlIHNldCBvZiBkZXNpZ25zIGZvciB3aGljaCB5b3Ugd2FudCB0byAKICAjICAgICAgIHByZWRpY3Qgc2hhcmVzLiAgU2FtZSBmb3JtYXQgYXQgdGhlIGRhdGEgdXNlZCB0byBlc3RpbWF0ZSBtb2RlbC4gCiAgIyBOb3RlIHRoYXQgdGhpcyBjb2RlIGFzc3VtZXMgYWxsIG1vZGVsIHBhcmFtZXRlcnMgYXJlIHJhbmRvbQogIGRhdGEubW9kZWwgPC0gbW9kZWwubWF0cml4KHVwZGF0ZShtb2RlbCRmb3JtdWxhLCAwIH4gLiksIGRhdGEgPSBkYXRhKVssLTFdCiAgY29lZi5TaWdtYSA8LSBjb3YubWxvZ2l0KG1vZGVsKQogIGNvZWYubXUgPC0gbW9kZWwkY29lZlsxOmRpbShjb2VmLlNpZ21hKVsxXV0KICBkcmF3cyA8LSBtdnJub3JtKG49bnJlc3AsIGNvZWYubXUsIGNvZWYuU2lnbWEpCiAgc2hhcmVzIDwtIG1hdHJpeChOQSwgbnJvdz1ucmVzcCwgbmNvbD1ucm93KGRhdGEpKQogIGZvciAoaSBpbiAxOm5yZXNwKSB7CiAgICB1dGlsaXR5IDwtIGRhdGEubW9kZWwlKiVkcmF3c1tpLF0KICAgIHNoYXJlID0gZXhwKHV0aWxpdHkpL3N1bShleHAodXRpbGl0eSkpCiAgICBzaGFyZXNbaSxdIDwtIHNoYXJlCiAgfQogIGNiaW5kKGNvbE1lYW5zKHNoYXJlcyksIGRhdGEpCn0KCnByZWRpY3QuaGllci5tbmwobTIuaGllciwgZGF0YT1jYXJzKQpgYGAK</div>
 
 
 

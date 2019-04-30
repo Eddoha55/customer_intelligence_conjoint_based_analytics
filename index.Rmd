@@ -11,6 +11,8 @@ always_allow_html: yes
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 # Options
 knitr::opts_chunk$set(cache = TRUE, warning=FALSE)
+library(mlogit)
+library(MASS)
 ```
 
 Read in the data
@@ -18,11 +20,13 @@ Read in the data
 ```{r}
 # all alternatives
 x<-read.csv("input/19019700001_conjoint_choice_dat_X.csv")
-#x$Price<-as.factor(as.character(x$Price))
+
 # choice per display group
 y<-read.csv("input/19019700001_conjoint_choice_dat_y.csv")
+
 # demographic information
 z<-read.csv("input/19019700001_conjoint_choice_dat_Z.csv")
+colnames(z)[2:4] <- c("sex", "age", "perception")
 ```
 
 Transform the data into long format
@@ -30,17 +34,16 @@ Transform the data into long format
 ```{r}
 choicesperquestions<-3
 
-y[1,2]
 for (i in 1:nrow(y))
 {
-  y[i,2]=(i-1)*choicesperquestions+y[i,2]
+  y[i,"y"]=(i-1)*choicesperquestions+y[i,"y"]
 }
 
-x$response<-0
+x$choice<-0
 for (i in 1:nrow(y))
 {
-  j=y[i,2]
-  x[j,8]<-1
+  j=y[i,"y"]
+  x[j,"choice"]<-1
 }
 
 x$Profile<-NULL
@@ -58,25 +61,23 @@ for (i in 1:nrow(x))
   }
   if(alternative<=choicesperquestions)
   {
-    x[i,8]<-questioncounter
-    x[i,9]<-alternative
+    x[i,"ques"]<-questioncounter
+    x[i,"alt"]<-alternative
     alternative<-alternative+1
   }
   else
   {
     questioncounter<-questioncounter+1
     alternative<-1
-    x[i,8]<-questioncounter
-    x[i,9]<-alternative
+    x[i,"ques"]<-questioncounter
+    x[i,"alt"]<-alternative
     alternative<-alternative+1
   }
 }
+x[,"choice"] <- x[,"choice"] == 1
 
-# merge a valid covariate here: in my case sex or Q1.
+# merge a valid covariate here: in my case sex, age, perception.
 x<-merge(x,z,by="ID",all.x=TRUE)
-colnames(x)[10] <- "sex"
-colnames(x)[11] <- "perception"
-x$Q2.<-NULL
 summary(x)
 ```
 
@@ -84,37 +85,149 @@ Our data x is now in the long format so you can launch the first two solution me
 
 # Analysis
 
-Use understanding code to make it ready for the third method (Hierarchical Bayes multinomial logit)
-
+Let's explore the data to see the choices for each possible alternative
 ```{r}
-choice <- rep(0, nrow(x))
-choice[x[,"response"]==1] <- x[x[,"response"]==1,"alt"]
+# Price
+xtabs(choice~price,data=x)
+
+# Brand
+xtabs(choice~brand,data=x)
+
+# Type
+xtabs(choice~type,data=x)
+
+# Gear
+xtabs(choice~gear,data=x)
+
+# Options
+xtabs(choice~options,data=x)
 ```
 
-Indicate which out of the 3 alternatives per question is chosen
+
+Creation d'un model multinomial
 
 ```{r}
-head(choice)
+car.mlogit <- mlogit.data(data=x, choice="choice", shape="long", alt.levels=paste("pos",1:3), id.var="ID")
+m1<-mlogit(choice ~ 0 + brand + price + type + gear + options, data=car.mlogit)
+summary(m1)
 ```
 
-Convert the factor levels to dummies: change the name of factor to your factor names
+Analyse:
+- Le type de transmission n'a pas d'impact significatif sur le choix d'une voiture
+- Marque: pas de différence significative entre Audi et BMW, mais par contre la "willingness to pay"" d'un client pour une Mercedes est plus faible de 26577.99 euros (faire apparaitre le calcul coef(m1)["brandMercedes"]/coef(m1)["price"] ) et préciser quece chiffre reflète certainement un biais d'échantillon
+- Price: le prix a un impact significatif sur le choix
+- Type: pas d'impact que ça soit une berline ou un SUV, par contre une city_car baisse la willingness to pay de 8613.325 euros (coef(m1)["typecity_car"]/coef(m1)["price"])
+- Options: a un impact significatif
+
+
+Maintenant essayons de prévoir les part de marché de BMW, Audi et Mercedes en fonction des caractéristiques de leurs voitures
 
 ```{r}
-x.coded <- model.matrix(~ Brand + Price + Type + Gear + Options, data = x) # change this to your own factors
-x.coded <- x.coded[, -1] # remove the intercept
+predict.mnl <- function(model, data) {
+  # Function for predicting shares from a multinomial logit model
+  # model: mlogit object returned by mlogit()
+  # data: a data frame containing the set of designs for which you want to
+  # predict shares. Same format as the data used to estimate model.
+  data.model <- model.matrix(update(model$formula, 0 ~ .), data = data)[,-1]
+  utility <- data.model %*% model$coef#marix multiplication
+  share <- exp(utility)/sum(exp(utility))#convert set back to prob
+  cbind(share, data)
+}
+
+car0 <- c(brand="BMW", price=15, type="city_car", gear="manual", options="all")
+car1 <- c(brand="BMW", price=20, type="SUV", gear="auto", options="some")
+car2 <- c(brand="Mercedes", price=15, type="city_car",  gear="manual", options="some")
+car3 <- c(brand="Mercedes", price=20, type="Berline",  gear="auto", options="none")
+car4 <- c(brand="Audi", price=25, type="Berline",  gear="manual", options="some")
+car5 <- c(brand="Audi", price=25, type="SUV",  gear="auto", options="some")
+cars <- data.frame(rbind(car0, car1, car2, car3, car4, car5))
+cars$price <- as.numeric(as.character(cars$price))
+
+predict.mnl(m1, cars)
+
+# create a grid with all possible design and select the ones we are interested in (in general the ones your company is offering)
+#attrib<-list(seat=c("6","7","8"),cargo=c("2ft","3ft"),eng=c("gas","hyb","elec"),price=c("30","35","40"))
+#total amount of combinations: 3*2*3*3=54
+#(new.data<-expand.grid(attrib)[c(8,1,3,41,49,26),])#randomly pick a few combos as "real" market options
+#predict.mnl(m3,new.data)
 ```
 
-Combine everything back into a df
-
 ```{r}
-choicemodelr.data <- cbind(x[, 1:3], x.coded, choice)
-head(choicemodelr.data)
+sensitivity.mnl <- function(model, attrib, base.data, competitor.data) {
+  # Function for creating data for a share-sensitivity chart
+  # model: mlogit object returned by mlogit() function
+  # attrib: list of vectors with attribute levels to be used in sensitivity
+  # base.data: data frame containing baseline design of target product
+  # competitor.data: data frame contining design of competitive set
+  data <- rbind(base.data, competitor.data)
+  base.share <- predict.mnl(model, data)[1,1]
+  share <- NULL
+  for (a in seq_along(attrib)) {
+    for (i in attrib[[a]]) {
+      data[1,] <- base.data
+      data[1, a] <- i
+      share <- c(share, predict.mnl(model, data)[1,1])
+    }
+  }
+  data.frame(level=unlist(attrib), share=share, increase=share-base.share)
+
+}
+
+base.data <- data.frame(rbind(car5))
+base.data$price <- as.numeric(as.character(base.data$price))
+
+competitor.data <- data.frame(rbind(car0, car1, car2, car3, car4))
+competitor.data$price <- as.numeric(as.character(competitor.data$price))
+
+attrib<-list(brand=c("Audi"), price=levels(x$price), type=c("Berline", "city_car", "SUV"), gear=levels(x$gear), options=levels(x$options))
+
+tradeoff <- sensitivity.mnl(m1, attrib, base.data, competitor.data)
+
+barplot(tradeoff$increase, horiz=FALSE, names.arg=tradeoff$level,
+        ylab="Change in Share for Baseline Product")
+#shows how share would change if we changed each of the attributes of the design one at a time in comparison to a existing alternative (8)
 ```
 
-Covariate: change sex into the name of your covariate
+
+
+
+#2. random effect/heterogen mnlogit: each respondent has his own utility coef
 
 ```{r}
-sex <- x$sex[x$ques==1 & x$alt==1]=="Male "# for each respondent
-sex <- as.numeric(sex)
-demos <- as.matrix(sex, nrow=length(sex))
+m1.rpar <- rep("n", length=length(m1$coef))
+names(m1.rpar) <- names(m1$coef)
+m1.rpar
+m1.hier <- mlogit(choice ~ 0 + brand + price + type + gear + options,data = car.mlogit, panel=TRUE, rpar = m1.rpar, correlation = FALSE)
+#panel=true means multiple questions per respondent
+#assume utilities are not correlated
+summary(m1.hier)
+stdev(m1.hier)
+# a lot of spread for the 8 seat choice: people prefer 6 but there are also a bunch of people going for 8
+
+m2.hier <- update(m1.hier, correlation = TRUE)
+summary(m2.hier)
+cov2cor(cov.mlogit(m2.hier))
+#correlation between levels of seating: normal the respondent thinks it is an important factor when increasing/decreasing
+
+# Simulating shares
+predict.hier.mnl <- function(model, data, nresp=1000) {
+  # Function for predicting shares from a hierarchical multinomial logit model 
+  # model: mlogit object returned by mlogit()
+  # data: a data frame containing the set of designs for which you want to 
+  #       predict shares.  Same format at the data used to estimate model. 
+  # Note that this code assumes all model parameters are random
+  data.model <- model.matrix(update(model$formula, 0 ~ .), data = data)[,-1]
+  coef.Sigma <- cov.mlogit(model)
+  coef.mu <- model$coef[1:dim(coef.Sigma)[1]]
+  draws <- mvrnorm(n=nresp, coef.mu, coef.Sigma)
+  shares <- matrix(NA, nrow=nresp, ncol=nrow(data))
+  for (i in 1:nresp) {
+    utility <- data.model%*%draws[i,]
+    share = exp(utility)/sum(exp(utility))
+    shares[i,] <- share
+  }
+  cbind(colMeans(shares), data)
+}
+
+predict.hier.mnl(m2.hier, data=cars)
 ```
