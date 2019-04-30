@@ -13,6 +13,7 @@ always_allow_html: yes
 knitr::opts_chunk$set(cache = TRUE, warning=FALSE)
 library(mlogit)
 library(MASS)
+library(ggplot2)
 ```
 
 Read in the data
@@ -28,6 +29,15 @@ y<-read.csv("input/19019700001_conjoint_choice_dat_y.csv")
 z<-read.csv("input/19019700001_conjoint_choice_dat_Z.csv")
 colnames(z)[2:4] <- c("sex", "age", "perception")
 ```
+
+Demographic analysis
+
+```{r}
+ggplot(z)+aes(sex)+geom_bar() # a bit more female than male
+ggplot(z)+aes(age)+geom_bar() # a large majority of people between 18-24
+ggplot(z)+aes(perception)+geom_bar() # most of the respondents people have a positive perception
+```
+
 
 Transform the data into long format
 
@@ -114,13 +124,13 @@ summary(m1)
 
 Analyse:
 - Le type de transmission n'a pas d'impact significatif sur le choix d'une voiture
-- Marque: pas de différence significative entre Audi et BMW, mais par contre la "willingness to pay"" d'un client pour une Mercedes est plus faible de 26577.99 euros (faire apparaitre le calcul coef(m1)["brandMercedes"]/coef(m1)["price"] ) et préciser quece chiffre reflète certainement un biais d'échantillon
+- Marque: pas de diff??rence significative entre Audi et BMW, mais par contre la "willingness to pay"" d'un client pour une Mercedes est plus faible de 26577.99 euros (faire apparaitre le calcul coef(m1)["brandMercedes"]/coef(m1)["price"] ) et pr??ciser quece chiffre refl??te certainement un biais d'??chantillon
 - Price: le prix a un impact significatif sur le choix
-- Type: pas d'impact que ça soit une berline ou un SUV, par contre une city_car baisse la willingness to pay de 8613.325 euros (coef(m1)["typecity_car"]/coef(m1)["price"])
+- Type: pas d'impact que ??a soit une berline ou un SUV, par contre une city_car baisse la willingness to pay de 8613.325 euros (coef(m1)["typecity_car"]/coef(m1)["price"])
 - Options: a un impact significatif
 
 
-Maintenant essayons de prévoir les part de marché de BMW, Audi et Mercedes en fonction des caractéristiques de leurs voitures
+Maintenant essayons de pr??voir les part de march?? de BMW, Audi et Mercedes en fonction des caract??ristiques de leurs voitures
 
 ```{r}
 predict.mnl <- function(model, data) {
